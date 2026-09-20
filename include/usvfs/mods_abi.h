@@ -78,8 +78,7 @@ extern "C"
 #define MODS_USVFS_CAPABILITY_DURABLE_MUTATION_DELTAS (UINT64_C(1) << 7)
 #define MODS_USVFS_CAPABILITY_BOUNDED_EVENT_CHANNEL (UINT64_C(1) << 8)
 #define MODS_USVFS_CAPABILITIES_V1                                                     \
-  (MODS_USVFS_CAPABILITY_FAIL_CLOSED_DESCENDANT_HANDSHAKE |                            \
-   MODS_USVFS_CAPABILITY_NO_BLACKLIST_BYPASS |                                         \
+  (MODS_USVFS_CAPABILITY_NO_BLACKLIST_BYPASS |                                         \
    MODS_USVFS_CAPABILITY_MOHIDDEN_ORDINARY_FILE |                                      \
    MODS_USVFS_CAPABILITY_EXACT_MANDATORY_HOOK_MANIFEST)
 
