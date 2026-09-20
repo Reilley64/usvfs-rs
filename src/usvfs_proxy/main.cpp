@@ -156,29 +156,27 @@ int main(int argc, char** argv)
     boost::filesystem::path p(winapi::wide::getModuleFileName(nullptr));
 
     if (executable.empty()) {
+      if (tid == 0) {
+        logger->error("arbitrary PID attachment is not supported");
+        return 1;
+      }
+
       HANDLE processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-      HANDLE threadHandle  = INVALID_HANDLE_VALUE;
-      if (tid != 0) {
-        threadHandle = OpenThread(THREAD_ALL_ACCESS, FALSE, tid);
+      if (processHandle == nullptr) {
+        logger->error("failed to open target process: {}", GetLastError());
+        return 1;
+      }
+      HANDLE threadHandle = OpenThread(THREAD_ALL_ACCESS, FALSE, tid);
+      if (threadHandle == nullptr) {
+        logger->error("failed to open target thread: {}", GetLastError());
+        CloseHandle(processHandle);
+        return 1;
       }
 
-      BOOL blacklisted = FALSE;
-      TCHAR szModName[MAX_PATH];
-
-      if (GetModuleFileNameEx(processHandle, NULL, szModName,
-                              sizeof(szModName) / sizeof(TCHAR))) {
-        const auto appName = usvfs::shared::string_cast<std::string>(szModName);
-
-        if (params.first->executableBlacklisted(appName, {})) {
-          logger->info("not injecting {} as application is blacklisted", appName);
-          blacklisted = TRUE;
-        }
-      }
-
-      if (!blacklisted) {
-        usvfs::injectProcess(p.parent_path().wstring(), params.first->makeLocal(),
-                             processHandle, threadHandle);
-      }
+      usvfs::injectProcess(p.parent_path().wstring(), params.first->makeLocal(),
+                           processHandle, threadHandle);
+      CloseHandle(threadHandle);
+      CloseHandle(processHandle);
     } else {
       winapi::process::Result process =
           winapi::ansi::createProcess(executable)
@@ -190,18 +188,8 @@ int main(int argc, char** argv)
         return 1;
       }
 
-      BOOL blacklisted = FALSE;
-
-      if (params.first->executableBlacklisted(executable, {})) {
-        logger->info("not injecting {} as application is blacklisted", executable);
-
-        blacklisted = TRUE;
-      }
-
-      if (!blacklisted) {
-        usvfs::injectProcess(p.parent_path().wstring(), params.first->makeLocal(),
-                             process.processInfo);
-      }
+      usvfs::injectProcess(p.parent_path().wstring(), params.first->makeLocal(),
+                           process.processInfo);
 
       ResumeThread(process.processInfo.hThread);
     }
@@ -217,5 +205,6 @@ int main(int argc, char** argv)
     } catch (const std::exception&) {
       logger->critical(e.what());
     }
+    return 1;
   }
 }

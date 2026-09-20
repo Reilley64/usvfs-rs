@@ -154,14 +154,13 @@ extern "C"
   DLLEXPORT BOOL WINAPI usvfsCreateVFSDump(LPSTR buffer, size_t* size);
 
   /**
-   * adds an executable to the blacklist so it doesn't get exposed to the virtual
-   * file system
-   * @param executableName  name of the executable
+   * retained for ABI compatibility. The fail-closed fork ignores blacklist entries.
+   * @param executableName  ignored
    */
   DLLEXPORT VOID WINAPI usvfsBlacklistExecutable(LPCWSTR executableName);
 
   /**
-   * clears the executable blacklist
+   * retained for ABI compatibility. Process propagation never consults a blacklist.
    */
   DLLEXPORT VOID WINAPI usvfsClearExecutableBlacklist();
 

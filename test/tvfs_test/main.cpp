@@ -39,6 +39,8 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 #include <hooks/kernel32.h>
 #include <hooks/ntdll.h>
 #include <logging.h>
+#include <mods_abi.h>
+#include <mods_protocol.h>
 #include <stringcast.h>
 #include <unicodestring.h>
 #include <usvfs.h>
@@ -49,6 +51,113 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 namespace spd = spdlog;
 
 namespace ush = usvfs::shared;
+
+TEST(ModsUsvfsAbi, RejectsInvalidHealthOutput)
+{
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_ARGUMENT, mods_usvfs_get_health_v1(nullptr));
+
+  mods_usvfs_health_v1 tooSmall{};
+  tooSmall.struct_size = static_cast<uint32_t>(sizeof(tooSmall) - 1);
+  tooSmall.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_STRUCT_TOO_SMALL, mods_usvfs_get_health_v1(&tooSmall));
+
+  mods_usvfs_health_v1 unsupported{};
+  unsupported.struct_size = static_cast<uint32_t>(sizeof(unsupported));
+  unsupported.abi_version = MODS_USVFS_ABI_VERSION_V1 + 1;
+  EXPECT_EQ(MODS_USVFS_RESULT_UNSUPPORTED_ABI_VERSION,
+            mods_usvfs_get_health_v1(&unsupported));
+}
+
+TEST(ModsUsvfsAbi, ReportsStaticHandshakeBeforeHookInitialization)
+{
+  mods_usvfs_health_v1 health{};
+  health.struct_size = static_cast<uint32_t>(sizeof(health));
+  health.abi_version = MODS_USVFS_ABI_VERSION_V1;
+
+  EXPECT_EQ(MODS_USVFS_RESULT_NOT_INITIALIZED, mods_usvfs_get_health_v1(&health));
+  EXPECT_EQ(static_cast<uint32_t>(sizeof(health)), health.struct_size);
+  EXPECT_EQ(MODS_USVFS_ABI_VERSION_V1, health.abi_version);
+  EXPECT_EQ(MODS_USVFS_PROTOCOL_VERSION_V1, health.protocol_version);
+  EXPECT_EQ(MODS_USVFS_FORK_REVISION_V1, health.fork_revision);
+#if defined(_WIN64)
+  EXPECT_EQ(MODS_USVFS_ARCHITECTURE_X64, health.architecture);
+#else
+  EXPECT_EQ(MODS_USVFS_ARCHITECTURE_X86, health.architecture);
+#endif
+  EXPECT_EQ(MODS_USVFS_MANDATORY_HOOK_COUNT_V1, health.mandatory_hook_count);
+  EXPECT_EQ(MODS_USVFS_HOOK_MANIFEST_VERSION_V1, health.hook_manifest_version);
+  EXPECT_EQ(MODS_USVFS_CAPABILITIES_V1, health.capability_flags);
+  EXPECT_EQ(0U, health.installed_hook_count);
+  EXPECT_EQ(0U, health.passed_probe_count);
+}
+
+TEST(ModsUsvfsAbi, ValidatesAndReportsHookStatusBeforeInitialization)
+{
+  EXPECT_EQ(
+      MODS_USVFS_RESULT_INVALID_ARGUMENT,
+      mods_usvfs_get_hook_status_v1(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A, nullptr));
+
+  mods_usvfs_hook_status_v1 tooSmall{};
+  tooSmall.struct_size = static_cast<uint32_t>(sizeof(tooSmall) - 1);
+  tooSmall.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_STRUCT_TOO_SMALL,
+            mods_usvfs_get_hook_status_v1(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A,
+                                          &tooSmall));
+
+  mods_usvfs_hook_status_v1 unsupported{};
+  unsupported.struct_size = static_cast<uint32_t>(sizeof(unsupported));
+  unsupported.abi_version = MODS_USVFS_ABI_VERSION_V1 + 1;
+  EXPECT_EQ(MODS_USVFS_RESULT_UNSUPPORTED_ABI_VERSION,
+            mods_usvfs_get_hook_status_v1(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A,
+                                          &unsupported));
+
+  mods_usvfs_hook_status_v1 status{};
+  status.struct_size = static_cast<uint32_t>(sizeof(status));
+  status.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_HOOK_ID_OUT_OF_RANGE,
+            mods_usvfs_get_hook_status_v1(MODS_USVFS_MANDATORY_HOOK_COUNT_V1, &status));
+  EXPECT_EQ(
+      MODS_USVFS_RESULT_NOT_INITIALIZED,
+      mods_usvfs_get_hook_status_v1(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A, &status));
+  EXPECT_EQ(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A, status.hook_id);
+  EXPECT_EQ(MODS_USVFS_HOOK_INSTALL_NOT_ATTEMPTED, status.install_status);
+  EXPECT_EQ(MODS_USVFS_HOOK_PROBE_NOT_RUN, status.probe_status);
+}
+
+TEST(ModsUsvfsProtocol, ValidatesAndDecodesBoundedFrameHeaders)
+{
+  std::array<uint8_t, MODS_USVFS_FRAME_HEADER_SIZE_V1> frame{};
+  std::memcpy(frame.data(), "MVFS", 4);
+  frame[4] = MODS_USVFS_PROTOCOL_VERSION_V1;
+  frame[6] = MODS_USVFS_MESSAGE_HEALTH_EVENT;
+  frame[8] = MODS_USVFS_FRAME_HEADER_SIZE_V1;
+  frame[32] = 7;
+  frame[72] = 3;
+
+  mods_usvfs_frame_header_v1 header{};
+  header.struct_size = sizeof(header);
+  header.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_validate_frame_v1(frame.data(), frame.size(), &header));
+  EXPECT_EQ(MODS_USVFS_MESSAGE_HEALTH_EVENT, header.message_type);
+  EXPECT_EQ(7U, header.request_id);
+  EXPECT_EQ(3U, header.expected_delta_version);
+  EXPECT_EQ(0U, header.payload_length);
+}
+
+TEST(ModsUsvfsProtocol, RejectsInvalidAndOversizedFrames)
+{
+  std::array<uint8_t, MODS_USVFS_FRAME_HEADER_SIZE_V1> frame{};
+  mods_usvfs_frame_header_v1 header{};
+  header.struct_size = sizeof(header);
+  header.abi_version = MODS_USVFS_ABI_VERSION_V1;
+
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_FRAME,
+            mods_usvfs_validate_frame_v1(frame.data(), frame.size(), &header));
+  EXPECT_EQ(MODS_USVFS_RESULT_FRAME_TOO_LARGE,
+            mods_usvfs_validate_frame_v1(
+                frame.data(), MODS_USVFS_FRAME_MAX_SIZE_V1 + 1, &header));
+}
 
 // name of a file to be created in the virtual fs. Shouldn't exist on disc but the
 // directory must exist
@@ -161,6 +270,19 @@ public:
 
 private:
 };
+
+TEST_F(USVFSTestAuto, DisablesBlacklistAndMohiddenSkipping)
+{
+  usvfsBlacklistExecutable(L"notepad.exe");
+  usvfsAddSkipFileSuffix(L".MoHidden");
+  usvfsAddSkipFileSuffix(L".skip");
+
+  auto context = usvfs::HookContext::readAccess(__FUNCTION__);
+  EXPECT_FALSE(context->executableBlacklisted(L"C:\\Windows\\notepad.exe", nullptr));
+  EXPECT_THAT(context->skipFileSuffixes(),
+              ::testing::Not(::testing::Contains(".MoHidden")));
+  EXPECT_THAT(context->skipFileSuffixes(), ::testing::Contains(".skip"));
+}
 
 TEST_F(USVFSTest, CanResizeRedirectiontree)
 {

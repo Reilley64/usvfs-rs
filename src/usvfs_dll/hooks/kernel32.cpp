@@ -164,6 +164,25 @@ HMODULE WINAPI usvfs::hook_LoadLibraryExW(LPCWSTR lpFileName, HANDLE hFile,
   return res;
 }
 
+void failCreatedProcess(LPPROCESS_INFORMATION processInformation)
+{
+  if (processInformation == nullptr) {
+    return;
+  }
+
+  if (processInformation->hProcess != nullptr) {
+    ::TerminateProcess(processInformation->hProcess, 125);
+    ::WaitForSingleObject(processInformation->hProcess, INFINITE);
+  }
+  if (processInformation->hThread != nullptr) {
+    ::CloseHandle(processInformation->hThread);
+  }
+  if (processInformation->hProcess != nullptr) {
+    ::CloseHandle(processInformation->hProcess);
+  }
+  ::ZeroMemory(processInformation, sizeof(*processInformation));
+}
+
 /// determine name of the binary to run based on parameters for createprocess
 std::wstring getBinaryName(LPCWSTR applicationName, LPCWSTR lpCommandLine)
 {
@@ -315,29 +334,32 @@ BOOL WINAPI usvfs::hook_CreateProcessInternalW(
                                lpStartupInfo, lpProcessInformation, newToken);
   POST_REALCALL
 
-  BOOL blacklisted = FALSE;
-  {  // limit scope of context
-    auto context = READ_CONTEXT();
-    blacklisted  = context->executableBlacklisted(applicationReroute.fileName(),
-                                                  cmdReroute.fileName());
-  }
-
   if (res) {
-    if (!blacklisted) {
-      try {
-        injectProcess(dllPath, callParameters, *lpProcessInformation);
-      } catch (const std::exception& e) {
-        spdlog::get("hooks")->error("failed to inject into {0}: {1}",
-                                    lpApplicationName != nullptr
-                                        ? applicationReroute.fileName()
-                                        : static_cast<LPCWSTR>(lpCommandLine),
-                                    e.what());
-      }
+    try {
+      injectProcess(dllPath, callParameters, *lpProcessInformation);
+    } catch (const std::exception& e) {
+      spdlog::get("hooks")->critical("failed to virtualize spawned process {0}: {1}",
+                                     lpApplicationName != nullptr
+                                         ? applicationReroute.fileName()
+                                         : static_cast<LPCWSTR>(lpCommandLine),
+                                     e.what());
+      failCreatedProcess(lpProcessInformation);
+      callContext.updateLastError(ERROR_DLL_INIT_FAILED);
+      res = FALSE;
+    } catch (...) {
+      spdlog::get("hooks")->critical(
+          "unknown failure virtualizing spawned process");
+      failCreatedProcess(lpProcessInformation);
+      callContext.updateLastError(ERROR_DLL_INIT_FAILED);
+      res = FALSE;
     }
 
     // resume unless process is supposed to start suspended
-    if (!susp && (ResumeThread(lpProcessInformation->hThread) == (DWORD)-1)) {
-      spdlog::get("hooks")->error("failed to inject into spawned process");
+    if (res && !susp &&
+        (ResumeThread(lpProcessInformation->hThread) == static_cast<DWORD>(-1))) {
+      spdlog::get("hooks")->critical("failed to resume virtualized spawned process");
+      failCreatedProcess(lpProcessInformation);
+      callContext.updateLastError(ERROR_DLL_INIT_FAILED);
       res = FALSE;
     }
   }
@@ -1824,6 +1846,44 @@ BOOL WINAPI usvfs::hook_WritePrivateProfileStringW(LPCWSTR lpAppName, LPCWSTR lp
   HOOK_END
 
   return res;
+}
+
+BOOL(WINAPI* usvfs::SetFileInformationByHandle)(
+    HANDLE hFile, FILE_INFO_BY_HANDLE_CLASS FileInformationClass,
+    LPVOID lpFileInformation, DWORD dwBufferSize);
+
+BOOL WINAPI usvfs::hook_SetFileInformationByHandle(
+    HANDLE hFile, FILE_INFO_BY_HANDLE_CLASS FileInformationClass,
+    LPVOID lpFileInformation, DWORD dwBufferSize)
+{
+  return SetFileInformationByHandle(hFile, FileInformationClass, lpFileInformation,
+                                    dwBufferSize);
+}
+
+BOOL(WINAPI* usvfs::DuplicateHandle)(
+    HANDLE hSourceProcessHandle, HANDLE hSourceHandle,
+    HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess,
+    BOOL bInheritHandle, DWORD dwOptions);
+
+BOOL WINAPI usvfs::hook_DuplicateHandle(
+    HANDLE hSourceProcessHandle, HANDLE hSourceHandle,
+    HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess,
+    BOOL bInheritHandle, DWORD dwOptions)
+{
+  return DuplicateHandle(hSourceProcessHandle, hSourceHandle, hTargetProcessHandle,
+                         lpTargetHandle, dwDesiredAccess, bInheritHandle, dwOptions);
+}
+
+HANDLE(WINAPI* usvfs::CreateFileMappingW)(
+    HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect,
+    DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCWSTR lpName);
+
+HANDLE WINAPI usvfs::hook_CreateFileMappingW(
+    HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect,
+    DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCWSTR lpName)
+{
+  return CreateFileMappingW(hFile, lpFileMappingAttributes, flProtect,
+                            dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
 }
 
 VOID WINAPI usvfs::hook_ExitProcess(UINT exitCode)

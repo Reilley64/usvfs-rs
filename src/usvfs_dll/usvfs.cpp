@@ -24,6 +24,7 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 #include "redirectiontree.h"
 #include "usvfs_version.h"
 #include "usvfsparametersprivate.h"
+#include <bootstrap.h>
 #include <inject.h>
 #include <shmlogger.h>
 #include <spdlog/sinks/null_sink.h>
@@ -371,48 +372,62 @@ LONG WINAPI VEHandler(PEXCEPTION_POINTERS exceptionPtrs)
 // Exported functions
 //
 
-void __cdecl InitHooks(LPVOID parameters, size_t)
+void __cdecl InitHooks(LPVOID parameters, size_t parametersSize)
 {
-  InitLoggingInternal(false, true);
-
-  const usvfsParameters* params = reinterpret_cast<usvfsParameters*>(parameters);
-
-  // there is already a wait in the constructor of HookManager, but this one is useful
-  // to debug code here (from experience... ), should not wait twice since the second
-  // will return true immediately
-  if (params->debugMode) {
-    while (!::IsDebuggerPresent()) {
-      // wait for debugger to attach
-      ::Sleep(100);
-    }
+  const auto* bootstrap =
+      reinterpret_cast<const usvfs::BootstrapParameters*>(parameters);
+  if (bootstrap == nullptr || parametersSize != sizeof(*bootstrap) ||
+      bootstrap->structSize != sizeof(*bootstrap) ||
+      bootstrap->protocolVersion != usvfs::BootstrapProtocolVersion ||
+      bootstrap->readyEvent == 0 || bootstrap->continueEvent == 0) {
+    ::TerminateProcess(::GetCurrentProcess(), 125);
+    return;
   }
 
-  usvfs_dump_type = params->crashDumpsType;
-  usvfs_dump_path =
-      ush::string_cast<std::wstring>(params->crashDumpsPath, ush::CodePage::UTF8);
-
-  if (params->delayProcessMs > 0) {
-    ::Sleep(static_cast<unsigned long>(params->delayProcessMs));
-  }
-
-  SetLogLevel(params->logLevel);
-
-  if (exceptionHandler == nullptr) {
-    if (usvfs_dump_type != CrashDumpsType::None)
-      exceptionHandler = ::AddVectoredExceptionHandler(0, VEHandler);
-  } else {
-    spdlog::get("usvfs")->info("vectored exception handler already active");
-    // how did this happen??
-  }
-
-  spdlog::get("usvfs")->info(
-      "inithooks called {0} in process {1}:{2} (log level {3}, dump type {4}, dump "
-      "path {5})",
-      params->instanceName, winapi::ansi::getModuleFileName(nullptr),
-      ::GetCurrentProcessId(), static_cast<int>(params->logLevel),
-      static_cast<int>(params->crashDumpsType), params->crashDumpsPath);
+  HANDLE readyEvent =
+      reinterpret_cast<HANDLE>(static_cast<std::uintptr_t>(bootstrap->readyEvent));
+  HANDLE continueEvent =
+      reinterpret_cast<HANDLE>(static_cast<std::uintptr_t>(bootstrap->continueEvent));
+  const usvfsParameters* params = &bootstrap->parameters;
 
   try {
+    InitLoggingInternal(false, true);
+
+    // there is already a wait in the constructor of HookManager, but this one is useful
+    // to debug code here (from experience... ), should not wait twice since the second
+    // will return true immediately
+    if (params->debugMode) {
+      while (!::IsDebuggerPresent()) {
+        // wait for debugger to attach
+        ::Sleep(100);
+      }
+    }
+
+    usvfs_dump_type = params->crashDumpsType;
+    usvfs_dump_path =
+        ush::string_cast<std::wstring>(params->crashDumpsPath, ush::CodePage::UTF8);
+
+    if (params->delayProcessMs > 0) {
+      ::Sleep(static_cast<unsigned long>(params->delayProcessMs));
+    }
+
+    SetLogLevel(params->logLevel);
+
+    if (exceptionHandler == nullptr) {
+      if (usvfs_dump_type != CrashDumpsType::None)
+        exceptionHandler = ::AddVectoredExceptionHandler(0, VEHandler);
+    } else {
+      spdlog::get("usvfs")->info("vectored exception handler already active");
+      // how did this happen??
+    }
+
+    spdlog::get("usvfs")->info(
+        "inithooks called {0} in process {1}:{2} (log level {3}, dump type {4}, dump "
+        "path {5})",
+        params->instanceName, winapi::ansi::getModuleFileName(nullptr),
+        ::GetCurrentProcessId(), static_cast<int>(params->logLevel),
+        static_cast<int>(params->crashDumpsType), params->crashDumpsPath);
+
     manager = new usvfs::HookManager(*params, dllModule);
 
     auto context   = manager->context();
@@ -435,8 +450,39 @@ void __cdecl InitHooks(LPVOID parameters, size_t)
     spdlog::get("usvfs")->info("inithooks in process {0} successful",
                                ::GetCurrentProcessId());
 
+    if (!::SetEvent(readyEvent)) {
+      throw ush::windows_error("failed to signal injection handshake");
+    }
+    ::CloseHandle(readyEvent);
+    readyEvent = nullptr;
+
+    if (::WaitForSingleObject(continueEvent, INFINITE) != WAIT_OBJECT_0) {
+      throw ush::windows_error("failed to complete injection handshake");
+    }
+    ::CloseHandle(continueEvent);
   } catch (const std::exception& e) {
-    spdlog::get("usvfs")->debug("failed to initialise hooks: {0}", e.what());
+    try {
+      auto logger = spdlog::get("usvfs");
+      if (logger != nullptr) {
+        logger->critical("failed to initialise hooks: {0}", e.what());
+      }
+    } catch (...) {
+    }
+    if (readyEvent != nullptr) {
+      ::CloseHandle(readyEvent);
+    }
+    if (continueEvent != nullptr) {
+      ::CloseHandle(continueEvent);
+    }
+    ::TerminateProcess(::GetCurrentProcess(), 125);
+  } catch (...) {
+    if (readyEvent != nullptr) {
+      ::CloseHandle(readyEvent);
+    }
+    if (continueEvent != nullptr) {
+      ::CloseHandle(continueEvent);
+    }
+    ::TerminateProcess(::GetCurrentProcess(), 125);
   }
 }
 
@@ -825,8 +871,6 @@ BOOL WINAPI usvfsCreateProcessHooked(LPCWSTR lpApplicationName, LPWSTR lpCommand
   BOOL susp   = dwCreationFlags & CREATE_SUSPENDED;
   DWORD flags = dwCreationFlags | CREATE_SUSPENDED;
 
-  BOOL blacklisted = context->executableBlacklisted(lpApplicationName, lpCommandLine);
-
   BOOL res = CreateProcessW(lpApplicationName, lpCommandLine, lpProcessAttributes,
                             lpThreadAttributes, bInheritHandles, flags, lpEnvironment,
                             lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -836,23 +880,41 @@ BOOL WINAPI usvfsCreateProcessHooked(LPCWSTR lpApplicationName, LPWSTR lpCommand
     return FALSE;
   }
 
-  if (!blacklisted) {
-    std::wstring applicationDirPath = winapi::wide::getModuleFileName(dllModule);
-    boost::filesystem::path p(applicationDirPath);
-    try {
-      usvfs::injectProcess(p.parent_path().wstring(), context->callParameters(),
-                           *lpProcessInformation);
-    } catch (const std::exception& e) {
-      spdlog::get("usvfs")->error("failed to inject: {}", e.what());
-      logExtInfo(e, LogLevel::Error);
-      ::TerminateProcess(lpProcessInformation->hProcess, 1);
-      ::SetLastError(ERROR_INVALID_PARAMETER);
-      return FALSE;
-    }
+  std::wstring applicationDirPath = winapi::wide::getModuleFileName(dllModule);
+  boost::filesystem::path p(applicationDirPath);
+  try {
+    usvfs::injectProcess(p.parent_path().wstring(), context->callParameters(),
+                         *lpProcessInformation);
+  } catch (const std::exception& e) {
+    spdlog::get("usvfs")->critical("failed to virtualize root process: {}", e.what());
+    logExtInfo(e, LogLevel::Error);
+    ::TerminateProcess(lpProcessInformation->hProcess, 125);
+    ::WaitForSingleObject(lpProcessInformation->hProcess, INFINITE);
+    ::CloseHandle(lpProcessInformation->hThread);
+    ::CloseHandle(lpProcessInformation->hProcess);
+    ::ZeroMemory(lpProcessInformation, sizeof(*lpProcessInformation));
+    ::SetLastError(ERROR_DLL_INIT_FAILED);
+    return FALSE;
+  } catch (...) {
+    spdlog::get("usvfs")->critical(
+        "unknown failure virtualizing root process");
+    ::TerminateProcess(lpProcessInformation->hProcess, 125);
+    ::WaitForSingleObject(lpProcessInformation->hProcess, INFINITE);
+    ::CloseHandle(lpProcessInformation->hThread);
+    ::CloseHandle(lpProcessInformation->hProcess);
+    ::ZeroMemory(lpProcessInformation, sizeof(*lpProcessInformation));
+    ::SetLastError(ERROR_DLL_INIT_FAILED);
+    return FALSE;
   }
 
-  if (!susp) {
-    ResumeThread(lpProcessInformation->hThread);
+  if (!susp && ResumeThread(lpProcessInformation->hThread) == static_cast<DWORD>(-1)) {
+    ::TerminateProcess(lpProcessInformation->hProcess, 125);
+    ::WaitForSingleObject(lpProcessInformation->hProcess, INFINITE);
+    ::CloseHandle(lpProcessInformation->hThread);
+    ::CloseHandle(lpProcessInformation->hProcess);
+    ::ZeroMemory(lpProcessInformation, sizeof(*lpProcessInformation));
+    ::SetLastError(ERROR_DLL_INIT_FAILED);
+    return FALSE;
   }
 
   return TRUE;

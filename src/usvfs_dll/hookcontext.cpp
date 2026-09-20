@@ -184,33 +184,20 @@ std::vector<DWORD> HookContext::registeredProcesses() const
   return m_Parameters->registeredProcesses();
 }
 
-void HookContext::blacklistExecutable(const std::wstring& wexe)
+void HookContext::blacklistExecutable(const std::wstring&)
 {
-  const auto exe = shared::string_cast<std::string>(wexe, shared::CodePage::UTF8);
-
-  spdlog::get("usvfs")->debug("blacklisting '{}'", exe);
-  m_Parameters->blacklistExecutable(exe);
+  spdlog::get("usvfs")->warn(
+      "ignored executable blacklist entry; process propagation is fail closed");
 }
 
 void HookContext::clearExecutableBlacklist()
 {
-  spdlog::get("usvfs")->debug("clearing blacklist");
   m_Parameters->clearExecutableBlacklist();
 }
 
-BOOL HookContext::executableBlacklisted(LPCWSTR wapp, LPCWSTR wcmd) const
+BOOL HookContext::executableBlacklisted(LPCWSTR, LPCWSTR) const
 {
-  std::string app;
-  if (wapp) {
-    app = ush::string_cast<std::string>(wapp, ush::CodePage::UTF8);
-  }
-
-  std::string cmd;
-  if (wcmd) {
-    cmd = ush::string_cast<std::string>(wcmd, ush::CodePage::UTF8);
-  }
-
-  return m_Parameters->executableBlacklisted(app, cmd);
+  return FALSE;
 }
 
 void usvfs::HookContext::addSkipFileSuffix(const std::wstring& fileSuffix)
@@ -219,6 +206,11 @@ void usvfs::HookContext::addSkipFileSuffix(const std::wstring& fileSuffix)
       shared::string_cast<std::string>(fileSuffix, shared::CodePage::UTF8);
 
   if (fsuffix.empty()) {
+    return;
+  }
+  if (boost::algorithm::iequals(fsuffix, ".mohidden")) {
+    spdlog::get("usvfs")->info(
+        "ignored .mohidden skip suffix; it is an ordinary file name");
     return;
   }
 

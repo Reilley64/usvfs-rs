@@ -24,6 +24,8 @@ target_sources(usvfs_dll
         FILES
         ${PROJECT_SOURCE_DIR}/include/usvfs/dllimport.h
         ${PROJECT_SOURCE_DIR}/include/usvfs/logging.h
+        ${PROJECT_SOURCE_DIR}/include/usvfs/mods_abi.h
+        ${PROJECT_SOURCE_DIR}/include/usvfs/mods_protocol.h
         ${PROJECT_SOURCE_DIR}/include/usvfs/sharedparameters.h
         ${PROJECT_SOURCE_DIR}/include/usvfs/usvfs_version.h
         ${PROJECT_SOURCE_DIR}/include/usvfs/usvfs.h

@@ -25,18 +25,79 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 #include "hooks/kernel32.h"
 #include "hooks/ntdll.h"
 #include "usvfs.h"
-#include <VersionHelpers.h>
 #include <directory_tree.h>
 #include <logging.h>
 #include <shmlogger.h>
 #include <usvfsparameters.h>
 #include <winapi.h>
 
+#include <algorithm>
+#include <array>
+#include <stdexcept>
+#include <string_view>
+
 using namespace HookLib;
 namespace bf = boost::filesystem;
 
+namespace
+{
+constexpr std::array<std::string_view, 50> MandatoryHookManifest{
+    "GetFileAttributesExA",
+    "GetFileAttributesA",
+    "GetFileAttributesExW",
+    "GetFileAttributesW",
+    "SetFileAttributesW",
+    "CreateDirectoryW",
+    "RemoveDirectoryW",
+    "DeleteFileW",
+    "GetCurrentDirectoryA",
+    "GetCurrentDirectoryW",
+    "SetCurrentDirectoryA",
+    "SetCurrentDirectoryW",
+    "ExitProcess",
+    "CreateProcessInternalW",
+    "MoveFileA",
+    "MoveFileW",
+    "MoveFileExA",
+    "MoveFileExW",
+    "MoveFileWithProgressA",
+    "MoveFileWithProgressW",
+    "CopyFileExW",
+    "CopyFile2",
+    "GetPrivateProfileStringA",
+    "GetPrivateProfileStringW",
+    "GetPrivateProfileSectionA",
+    "GetPrivateProfileSectionW",
+    "WritePrivateProfileStringA",
+    "WritePrivateProfileStringW",
+    "GetFullPathNameA",
+    "GetFullPathNameW",
+    "FindFirstFileExW",
+    "NtQueryFullAttributesFile",
+    "NtQueryAttributesFile",
+    "NtQueryDirectoryFile",
+    "NtQueryDirectoryFileEx",
+    "NtQueryObject",
+    "NtQueryInformationFile",
+    "NtQueryInformationByName",
+    "NtOpenFile",
+    "NtCreateFile",
+    "NtClose",
+    "NtTerminateProcess",
+    "LoadLibraryExA",
+    "LoadLibraryExW",
+    "GetModuleFileNameA",
+    "GetModuleFileNameW",
+    "NtSetInformationFile",
+    "SetFileInformationByHandle",
+    "DuplicateHandle",
+    "CreateFileMappingW"};
+}
+
 namespace usvfs
 {
+
+static_assert(HookManager::MandatoryHookCount == MandatoryHookManifest.size());
 
 HookManager* HookManager::s_Instance = nullptr;
 
@@ -47,26 +108,37 @@ HookManager::HookManager(const usvfsParameters& params, HMODULE module)
     throw std::runtime_error("singleton duplicate instantiation (HookManager)");
   }
 
-  s_Instance = this;
+  s_Instance             = this;
+  bool processRegistered = false;
 
-  m_Context.registerProcess(::GetCurrentProcessId());
-  spdlog::get("usvfs")->info("Process registered in shared process list : {}",
-                             ::GetCurrentProcessId());
+  try {
+    m_Context.registerProcess(::GetCurrentProcessId());
+    processRegistered = true;
+    spdlog::get("usvfs")->info("Process registered in shared process list : {}",
+                               ::GetCurrentProcessId());
 
-  winapi::ex::OSVersion version = winapi::ex::getOSVersion();
-  spdlog::get("usvfs")->info(
-      "Windows version {}.{}.{} sp {} platform {} ({})", version.major, version.minor,
-      version.build, version.servicpack, version.platformid,
-      shared::string_cast<std::string>(winapi::ex::wide::getWindowsBuildLab(true))
-          .c_str());
+    winapi::ex::OSVersion version = winapi::ex::getOSVersion();
+    spdlog::get("usvfs")->info(
+        "Windows version {}.{}.{} sp {} platform {} ({})", version.major, version.minor,
+        version.build, version.servicpack, version.platformid,
+        shared::string_cast<std::string>(winapi::ex::wide::getWindowsBuildLab(true))
+            .c_str());
 
-  initHooks();
+    initHooks();
 
-  if (params.debugMode) {
-    while (!::IsDebuggerPresent()) {
-      // wait for debugger to attach
-      ::Sleep(100);
+    if (params.debugMode) {
+      while (!::IsDebuggerPresent()) {
+        // wait for debugger to attach
+        ::Sleep(100);
+      }
     }
+  } catch (...) {
+    removeHooks();
+    if (processRegistered) {
+      m_Context.unregisterCurrentProcess();
+    }
+    s_Instance = nullptr;
+    throw;
   }
 }
 
@@ -75,6 +147,7 @@ HookManager::~HookManager()
   spdlog::get("hooks")->debug("end hook of process {}", GetCurrentProcessId());
   removeHooks();
   m_Context.unregisterCurrentProcess();
+  s_Instance = nullptr;
 }
 
 HookManager& HookManager::instance()
@@ -84,6 +157,47 @@ HookManager& HookManager::instance()
   }
 
   return *s_Instance;
+}
+
+HookManager* HookManager::instanceIfPresent() noexcept
+{
+  return s_Instance;
+}
+
+std::size_t HookManager::installedHookCount() const noexcept
+{
+  return static_cast<std::size_t>(std::count_if(
+      m_HookStatuses.begin(), m_HookStatuses.end(), [](const HookStatus& status) {
+        return status.installed;
+      }));
+}
+
+std::size_t HookManager::passedProbeCount() const noexcept
+{
+  return static_cast<std::size_t>(std::count_if(
+      m_HookStatuses.begin(), m_HookStatuses.end(), [](const HookStatus& status) {
+        return status.probePassed;
+      }));
+}
+
+bool HookManager::hookInstallationAttempted(std::size_t hookId) const noexcept
+{
+  return hookId < m_HookStatuses.size() && m_HookStatuses[hookId].installAttempted;
+}
+
+bool HookManager::hookInstallationSucceeded(std::size_t hookId) const noexcept
+{
+  return hookId < m_HookStatuses.size() && m_HookStatuses[hookId].installed;
+}
+
+bool HookManager::hookProbeRun(std::size_t hookId) const noexcept
+{
+  return hookId < m_HookStatuses.size() && m_HookStatuses[hookId].probeRun;
+}
+
+bool HookManager::hookProbePassed(std::size_t hookId) const noexcept
+{
+  return hookId < m_HookStatuses.size() && m_HookStatuses[hookId].probePassed;
 }
 
 LPVOID HookManager::detour(const char* functionName)
@@ -137,6 +251,21 @@ void HookManager::installHook(HMODULE module1, HMODULE module2,
                               LPVOID* fillFuncAddr = nullptr)
 {
   BOOST_ASSERT(hook != nullptr);
+
+  const auto manifestEntry = std::find(MandatoryHookManifest.begin(),
+                                       MandatoryHookManifest.end(), functionName);
+  if (manifestEntry == MandatoryHookManifest.end()) {
+    throw std::logic_error(
+        "attempted to install a hook outside the mandatory manifest");
+  }
+
+  HookStatus& status = m_HookStatuses[static_cast<std::size_t>(
+      std::distance(MandatoryHookManifest.begin(), manifestEntry))];
+  if (status.installAttempted) {
+    throw std::logic_error("attempted to install a mandatory hook more than once");
+  }
+  status.installAttempted = true;
+
   HOOKHANDLE handle  = INVALID_HOOK;
   HookError err      = ERR_NONE;
   LPVOID funcAddr    = nullptr;
@@ -167,6 +296,7 @@ void HookManager::installHook(HMODULE module1, HMODULE module2,
     spdlog::get("usvfs")->error("failed to hook {0}: {1}", functionName,
                                 GetErrorString(err));
   } else {
+    status.installed = true;
     m_Stubs.insert(make_pair(funcAddr, functionName));
     m_Hooks.insert(make_pair(std::string(functionName), handle));
     spdlog::get("usvfs")->info("hooked {0} ({1}) in {2} type {3}", functionName,
@@ -227,91 +357,135 @@ void HookManager::initHooks()
 
   HookLib::TrampolinePool::instance().setBlock(true);
 
-  HMODULE k32Mod = GetModuleHandleA("kernel32.dll");
-  spdlog::get("usvfs")->debug("kernel32.dll at {0:x}",
-                              reinterpret_cast<uintptr_t>(k32Mod));
-  // kernelbase.dll contains the actual implementation for functions formerly in
-  // kernel32.dll and advapi32.dll, starting with Windows 7
-  // http://msdn.microsoft.com/en-us/library/windows/desktop/dd371752(v=vs.85).aspx
-  HMODULE kbaseMod = GetModuleHandleA("kernelbase.dll");
-  spdlog::get("usvfs")->debug("kernelbase.dll at {0:x}",
-                              reinterpret_cast<uintptr_t>(kbaseMod));
+  try {
+    HMODULE k32Mod = GetModuleHandleA("kernel32.dll");
+    spdlog::get("usvfs")->debug("kernel32.dll at {0:x}",
+                                reinterpret_cast<uintptr_t>(k32Mod));
+    // kernelbase.dll contains the actual implementation for functions formerly in
+    // kernel32.dll and advapi32.dll, starting with Windows 7
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/dd371752(v=vs.85).aspx
+    HMODULE kbaseMod = GetModuleHandleA("kernelbase.dll");
+    spdlog::get("usvfs")->debug("kernelbase.dll at {0:x}",
+                                reinterpret_cast<uintptr_t>(kbaseMod));
 
-  installHook(kbaseMod, k32Mod, "GetFileAttributesExA", hook_GetFileAttributesExA);
-  installHook(kbaseMod, k32Mod, "GetFileAttributesA", hook_GetFileAttributesA);
-  installHook(kbaseMod, k32Mod, "GetFileAttributesExW", hook_GetFileAttributesExW);
-  installHook(kbaseMod, k32Mod, "GetFileAttributesW", hook_GetFileAttributesW);
-  installHook(kbaseMod, k32Mod, "SetFileAttributesW", hook_SetFileAttributesW);
+    installHook(kbaseMod, k32Mod, "GetFileAttributesExA", hook_GetFileAttributesExA);
+    installHook(kbaseMod, k32Mod, "GetFileAttributesA", hook_GetFileAttributesA);
+    installHook(kbaseMod, k32Mod, "GetFileAttributesExW", hook_GetFileAttributesExW);
+    installHook(kbaseMod, k32Mod, "GetFileAttributesW", hook_GetFileAttributesW);
+    installHook(kbaseMod, k32Mod, "SetFileAttributesW", hook_SetFileAttributesW);
 
-  installHook(kbaseMod, k32Mod, "CreateDirectoryW", hook_CreateDirectoryW);
-  installHook(kbaseMod, k32Mod, "RemoveDirectoryW", hook_RemoveDirectoryW);
-  installHook(kbaseMod, k32Mod, "DeleteFileW", hook_DeleteFileW);
-  installHook(kbaseMod, k32Mod, "GetCurrentDirectoryA", hook_GetCurrentDirectoryA);
-  installHook(kbaseMod, k32Mod, "GetCurrentDirectoryW", hook_GetCurrentDirectoryW);
-  installHook(kbaseMod, k32Mod, "SetCurrentDirectoryA", hook_SetCurrentDirectoryA);
-  installHook(kbaseMod, k32Mod, "SetCurrentDirectoryW", hook_SetCurrentDirectoryW);
+    installHook(kbaseMod, k32Mod, "CreateDirectoryW", hook_CreateDirectoryW);
+    installHook(kbaseMod, k32Mod, "RemoveDirectoryW", hook_RemoveDirectoryW);
+    installHook(kbaseMod, k32Mod, "DeleteFileW", hook_DeleteFileW);
+    installHook(kbaseMod, k32Mod, "GetCurrentDirectoryA", hook_GetCurrentDirectoryA);
+    installHook(kbaseMod, k32Mod, "GetCurrentDirectoryW", hook_GetCurrentDirectoryW);
+    installHook(kbaseMod, k32Mod, "SetCurrentDirectoryA", hook_SetCurrentDirectoryA);
+    installHook(kbaseMod, k32Mod, "SetCurrentDirectoryW", hook_SetCurrentDirectoryW);
 
-  installHook(kbaseMod, k32Mod, "ExitProcess", hook_ExitProcess);
+    installHook(kbaseMod, k32Mod, "ExitProcess", hook_ExitProcess);
 
-  installHook(kbaseMod, k32Mod, "CreateProcessInternalW", hook_CreateProcessInternalW,
-              reinterpret_cast<LPVOID*>(&CreateProcessInternalW));
+    installHook(kbaseMod, k32Mod, "CreateProcessInternalW", hook_CreateProcessInternalW,
+                reinterpret_cast<LPVOID*>(&CreateProcessInternalW));
 
-  installHook(kbaseMod, k32Mod, "MoveFileA", hook_MoveFileA);
-  installHook(kbaseMod, k32Mod, "MoveFileW", hook_MoveFileW);
-  installHook(kbaseMod, k32Mod, "MoveFileExA", hook_MoveFileExA);
-  installHook(kbaseMod, k32Mod, "MoveFileExW", hook_MoveFileExW);
-  installHook(kbaseMod, k32Mod, "MoveFileWithProgressA", hook_MoveFileWithProgressA);
-  installHook(kbaseMod, k32Mod, "MoveFileWithProgressW", hook_MoveFileWithProgressW);
+    installHook(kbaseMod, k32Mod, "MoveFileA", hook_MoveFileA);
+    installHook(kbaseMod, k32Mod, "MoveFileW", hook_MoveFileW);
+    installHook(kbaseMod, k32Mod, "MoveFileExA", hook_MoveFileExA);
+    installHook(kbaseMod, k32Mod, "MoveFileExW", hook_MoveFileExW);
+    installHook(kbaseMod, k32Mod, "MoveFileWithProgressA", hook_MoveFileWithProgressA);
+    installHook(kbaseMod, k32Mod, "MoveFileWithProgressW", hook_MoveFileWithProgressW);
 
-  installHook(kbaseMod, k32Mod, "CopyFileExW", hook_CopyFileExW);
-  if (IsWindows8OrGreater())
+    installHook(kbaseMod, k32Mod, "CopyFileExW", hook_CopyFileExW);
     installHook(kbaseMod, k32Mod, "CopyFile2", hook_CopyFile2,
                 reinterpret_cast<LPVOID*>(&CopyFile2));
+    installHook(kbaseMod, k32Mod, "SetFileInformationByHandle",
+                hook_SetFileInformationByHandle,
+                reinterpret_cast<LPVOID*>(&SetFileInformationByHandle));
+    installHook(kbaseMod, k32Mod, "DuplicateHandle", hook_DuplicateHandle,
+                reinterpret_cast<LPVOID*>(&DuplicateHandle));
+    installHook(kbaseMod, k32Mod, "CreateFileMappingW", hook_CreateFileMappingW,
+                reinterpret_cast<LPVOID*>(&CreateFileMappingW));
 
-  installHook(kbaseMod, k32Mod, "GetPrivateProfileStringA",
-              hook_GetPrivateProfileStringA);
-  installHook(kbaseMod, k32Mod, "GetPrivateProfileStringW",
-              hook_GetPrivateProfileStringW);
-  installHook(kbaseMod, k32Mod, "GetPrivateProfileSectionA",
-              hook_GetPrivateProfileSectionA);
-  installHook(kbaseMod, k32Mod, "GetPrivateProfileSectionW",
-              hook_GetPrivateProfileSectionW);
-  installHook(kbaseMod, k32Mod, "WritePrivateProfileStringA",
-              hook_WritePrivateProfileStringA);
-  installHook(kbaseMod, k32Mod, "WritePrivateProfileStringW",
-              hook_WritePrivateProfileStringW);
+    installHook(kbaseMod, k32Mod, "GetPrivateProfileStringA",
+                hook_GetPrivateProfileStringA);
+    installHook(kbaseMod, k32Mod, "GetPrivateProfileStringW",
+                hook_GetPrivateProfileStringW);
+    installHook(kbaseMod, k32Mod, "GetPrivateProfileSectionA",
+                hook_GetPrivateProfileSectionA);
+    installHook(kbaseMod, k32Mod, "GetPrivateProfileSectionW",
+                hook_GetPrivateProfileSectionW);
+    installHook(kbaseMod, k32Mod, "WritePrivateProfileStringA",
+                hook_WritePrivateProfileStringA);
+    installHook(kbaseMod, k32Mod, "WritePrivateProfileStringW",
+                hook_WritePrivateProfileStringW);
 
-  installHook(kbaseMod, k32Mod, "GetFullPathNameA", hook_GetFullPathNameA);
-  installHook(kbaseMod, k32Mod, "GetFullPathNameW", hook_GetFullPathNameW);
+    installHook(kbaseMod, k32Mod, "GetFullPathNameA", hook_GetFullPathNameA);
+    installHook(kbaseMod, k32Mod, "GetFullPathNameW", hook_GetFullPathNameW);
 
-  installHook(kbaseMod, k32Mod, "FindFirstFileExW", hook_FindFirstFileExW);
+    installHook(kbaseMod, k32Mod, "FindFirstFileExW", hook_FindFirstFileExW);
 
-  HMODULE ntdllMod = GetModuleHandleA("ntdll.dll");
-  spdlog::get("usvfs")->debug("ntdll.dll at {0:x}",
-                              reinterpret_cast<uintptr_t>(ntdllMod));
-  installHook(ntdllMod, nullptr, "NtQueryFullAttributesFile",
-              hook_NtQueryFullAttributesFile);
-  installHook(ntdllMod, nullptr, "NtQueryAttributesFile", hook_NtQueryAttributesFile);
-  installHook(ntdllMod, nullptr, "NtQueryDirectoryFile", hook_NtQueryDirectoryFile);
-  installHook(ntdllMod, nullptr, "NtQueryDirectoryFileEx", hook_NtQueryDirectoryFileEx);
-  installHook(ntdllMod, nullptr, "NtQueryObject", hook_NtQueryObject);
-  installHook(ntdllMod, nullptr, "NtQueryInformationFile", hook_NtQueryInformationFile);
-  installHook(ntdllMod, nullptr, "NtQueryInformationByName",
-              hook_NtQueryInformationByName);
-  installHook(ntdllMod, nullptr, "NtOpenFile", hook_NtOpenFile);
-  installHook(ntdllMod, nullptr, "NtCreateFile", hook_NtCreateFile);
-  installHook(ntdllMod, nullptr, "NtClose", hook_NtClose);
-  installHook(ntdllMod, nullptr, "NtTerminateProcess", hook_NtTerminateProcess);
+    HMODULE ntdllMod = GetModuleHandleA("ntdll.dll");
+    spdlog::get("usvfs")->debug("ntdll.dll at {0:x}",
+                                reinterpret_cast<uintptr_t>(ntdllMod));
+    installHook(ntdllMod, nullptr, "NtQueryFullAttributesFile",
+                hook_NtQueryFullAttributesFile);
+    installHook(ntdllMod, nullptr, "NtQueryAttributesFile", hook_NtQueryAttributesFile);
+    installHook(ntdllMod, nullptr, "NtQueryDirectoryFile", hook_NtQueryDirectoryFile);
+    installHook(ntdllMod, nullptr, "NtQueryDirectoryFileEx",
+                hook_NtQueryDirectoryFileEx);
+    installHook(ntdllMod, nullptr, "NtQueryObject", hook_NtQueryObject);
+    installHook(ntdllMod, nullptr, "NtQueryInformationFile",
+                hook_NtQueryInformationFile);
+    installHook(ntdllMod, nullptr, "NtSetInformationFile",
+                hook_NtSetInformationFile);
+    installHook(ntdllMod, nullptr, "NtQueryInformationByName",
+                hook_NtQueryInformationByName);
+    installHook(ntdllMod, nullptr, "NtOpenFile", hook_NtOpenFile);
+    installHook(ntdllMod, nullptr, "NtCreateFile", hook_NtCreateFile);
+    installHook(ntdllMod, nullptr, "NtClose", hook_NtClose);
+    installHook(ntdllMod, nullptr, "NtTerminateProcess", hook_NtTerminateProcess);
 
-  installHook(kbaseMod, k32Mod, "LoadLibraryExA", hook_LoadLibraryExA);
-  installHook(kbaseMod, k32Mod, "LoadLibraryExW", hook_LoadLibraryExW);
+    installHook(kbaseMod, k32Mod, "LoadLibraryExA", hook_LoadLibraryExA);
+    installHook(kbaseMod, k32Mod, "LoadLibraryExW", hook_LoadLibraryExW);
 
-  // install this hook late as usvfs is calling it itself for debugging purposes
-  installHook(kbaseMod, k32Mod, "GetModuleFileNameA", hook_GetModuleFileNameA);
-  installHook(kbaseMod, k32Mod, "GetModuleFileNameW", hook_GetModuleFileNameW);
+    // install this hook late as usvfs is calling it itself for debugging purposes
+    installHook(kbaseMod, k32Mod, "GetModuleFileNameA", hook_GetModuleFileNameA);
+    installHook(kbaseMod, k32Mod, "GetModuleFileNameW", hook_GetModuleFileNameW);
 
-  spdlog::get("usvfs")->debug("hooks installed");
-  HookLib::TrampolinePool::instance().setBlock(false);
+    const bool probesPassed = probeHooks();
+    HookLib::TrampolinePool::instance().setBlock(false);
+
+    if (!probesPassed) {
+      throw std::runtime_error("mandatory hook installation or probe failed");
+    }
+
+    spdlog::get("usvfs")->debug("all mandatory hooks installed and probed");
+  } catch (...) {
+    HookLib::TrampolinePool::instance().setBlock(false);
+    throw;
+  }
+}
+
+bool HookManager::probeHooks()
+{
+  bool allPassed = m_Hooks.size() == MandatoryHookManifest.size();
+
+  for (std::size_t hookId = 0; hookId < MandatoryHookManifest.size(); ++hookId) {
+    HookStatus& status = m_HookStatuses[hookId];
+    status.probeRun    = true;
+
+    const auto hook    = m_Hooks.find(std::string(MandatoryHookManifest[hookId]));
+    status.probePassed = status.installed && hook != m_Hooks.end() &&
+                         hook->second != INVALID_HOOK &&
+                         GetDetour(hook->second) != nullptr;
+
+    if (!status.probePassed) {
+      allPassed = false;
+      spdlog::get("usvfs")->error("mandatory hook probe failed for {}",
+                                  MandatoryHookManifest[hookId]);
+    }
+  }
+
+  return allPassed;
 }
 
 void HookManager::removeHooks()
