@@ -1354,6 +1354,15 @@ NTSTATUS WINAPI usvfs::hook_NtCreateFile(PHANDLE FileHandle, ACCESS_MASK Desired
   return res;
 }
 
+NTSTATUS WINAPI usvfs::hook_NtSetInformationFile(
+    HANDLE FileHandle, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation,
+    ULONG Length, FILE_INFORMATION_CLASS FileInformationClass)
+{
+  PreserveGetLastError ntFunctionsDoNotChangeGetLastError;
+  return ::NtSetInformationFile(FileHandle, IoStatusBlock, FileInformation, Length,
+                                FileInformationClass);
+}
+
 NTSTATUS WINAPI usvfs::hook_NtClose(HANDLE Handle)
 {
   PreserveGetLastError ntFunctionsDoNotChangeGetLastError;

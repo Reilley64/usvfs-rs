@@ -25,6 +25,7 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/filesystem.hpp>
 
+#include "bootstrap.h"
 #include "inject.h"
 #include <exceptionex.h>
 #include <formatters.h>
@@ -39,6 +40,120 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 namespace ush = usvfs::shared;
 
 using namespace winapi;
+
+namespace
+{
+
+constexpr DWORD InjectionHandshakeTimeoutMs  = 15000;
+constexpr UINT VirtualizationFailureExitCode = 125;
+
+void terminateAndWait(HANDLE processHandle)
+{
+  ::TerminateProcess(processHandle, VirtualizationFailureExitCode);
+  ::WaitForSingleObject(processHandle, INFINITE);
+}
+
+void injectSameBitness(HANDLE processHandle, HANDLE threadHandle,
+                       const boost::filesystem::path& dllPath,
+                       const usvfsParameters& parameters)
+{
+  if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE) {
+    USVFS_THROW_EXCEPTION(
+        usage_error() << ex_msg("injection requires a suspended primary thread"));
+  }
+
+  const DWORD observedSuspendCount = ::SuspendThread(threadHandle);
+  if (observedSuspendCount == static_cast<DWORD>(-1)) {
+    throw ush::windows_error("failed to inspect injection thread suspension");
+  }
+  const DWORD restoredSuspendCount = ::ResumeThread(threadHandle);
+  if (restoredSuspendCount == static_cast<DWORD>(-1)) {
+    throw ush::windows_error("failed to restore injection thread suspension");
+  }
+  if (observedSuspendCount != 1 || restoredSuspendCount != 2) {
+    USVFS_THROW_EXCEPTION(usage_error()
+                          << ex_msg("injection target is not a singly suspended "
+                                    "newly created process"));
+  }
+
+  HANDLE readyEvent          = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  HANDLE continueEvent       = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  HANDLE targetReadyEvent    = nullptr;
+  HANDLE targetContinueEvent = nullptr;
+
+  try {
+    if (readyEvent == nullptr || continueEvent == nullptr) {
+      throw ush::windows_error("failed to create injection handshake events");
+    }
+
+    if (!::DuplicateHandle(::GetCurrentProcess(), readyEvent, processHandle,
+                           &targetReadyEvent, EVENT_MODIFY_STATE, FALSE, 0) ||
+        !::DuplicateHandle(::GetCurrentProcess(), continueEvent, processHandle,
+                           &targetContinueEvent, SYNCHRONIZE, FALSE, 0)) {
+      throw ush::windows_error("failed to duplicate injection handshake events");
+    }
+
+    usvfs::BootstrapParameters bootstrap{};
+    bootstrap.structSize      = sizeof(bootstrap);
+    bootstrap.protocolVersion = usvfs::BootstrapProtocolVersion;
+    bootstrap.readyEvent =
+        static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(targetReadyEvent));
+    bootstrap.continueEvent = static_cast<std::uint64_t>(
+        reinterpret_cast<std::uintptr_t>(targetContinueEvent));
+    bootstrap.parameters = parameters;
+
+    InjectLib::InjectDLL(processHandle, threadHandle, dllPath.c_str(), "InitHooks",
+                         &bootstrap, sizeof(bootstrap));
+
+    const DWORD previousSuspendCount = ::ResumeThread(threadHandle);
+    if (previousSuspendCount != 1) {
+      throw ush::windows_error(
+          "injection target is not a newly created suspended process",
+          previousSuspendCount == static_cast<DWORD>(-1) ? ::GetLastError()
+                                                         : ERROR_INVALID_STATE);
+    }
+
+    HANDLE waits[] = {readyEvent, processHandle};
+    const DWORD waitResult =
+        ::WaitForMultipleObjects(2, waits, FALSE, InjectionHandshakeTimeoutMs);
+    if (waitResult != WAIT_OBJECT_0) {
+      terminateAndWait(processHandle);
+      if (waitResult == WAIT_TIMEOUT) {
+        USVFS_THROW_EXCEPTION(timeout_error()
+                              << ex_msg("injection handshake didn't complete in time"));
+      }
+      USVFS_THROW_EXCEPTION(unknown_error() << ex_msg("injection handshake failed")
+                                            << ex_win_errcode(::GetLastError()));
+    }
+
+    const DWORD handshakeSuspendCount = ::SuspendThread(threadHandle);
+    if (handshakeSuspendCount != 0) {
+      throw ush::windows_error("failed to suspend process after injection handshake",
+                               handshakeSuspendCount == static_cast<DWORD>(-1)
+                                   ? ::GetLastError()
+                                   : ERROR_INVALID_STATE);
+    }
+    if (!::SetEvent(continueEvent)) {
+      throw ush::windows_error("failed to complete injection handshake");
+    }
+  } catch (...) {
+    if (::WaitForSingleObject(processHandle, 0) == WAIT_TIMEOUT) {
+      terminateAndWait(processHandle);
+    }
+    if (readyEvent != nullptr) {
+      ::CloseHandle(readyEvent);
+    }
+    if (continueEvent != nullptr) {
+      ::CloseHandle(continueEvent);
+    }
+    throw;
+  }
+
+  ::CloseHandle(readyEvent);
+  ::CloseHandle(continueEvent);
+}
+
+}  // namespace
 
 void usvfs::injectProcess(const std::wstring& applicationPath,
                           const usvfsParameters& parameters,
@@ -112,11 +227,11 @@ void usvfs::injectProcess(const std::wstring& applicationPath,
 
     spdlog::get("usvfs")->info("dll path: {}", dllPath.wstring());
 
-    InjectLib::InjectDLL(processHandle, threadHandle, dllPath.c_str(), "InitHooks",
-                         &parameters, sizeof(parameters));
+    injectSameBitness(processHandle, threadHandle, dllPath, parameters);
 
-    spdlog::get("usvfs")->info("injection to same bitness process {} successful",
-                               ::GetProcessId(processHandle));
+    spdlog::get("usvfs")->info(
+        "injection handshake for same bitness process {} successful",
+        ::GetProcessId(processHandle));
   } else {
     // first try platform specific proxy exe:
     static constexpr auto USVFS_PREFERED_EXE =
@@ -184,8 +299,13 @@ void usvfs::injectProcess(const std::wstring& applicationPath,
                               << ex_win_errcode(result.errorCode));
       } break;
       default: {
-        spdlog::get("usvfs")->debug("proxy run successful");
-        // nop
+        DWORD exitCode = 1;
+        if (!::GetExitCodeProcess(result.processInfo.hProcess, &exitCode) ||
+            exitCode != 0) {
+          USVFS_THROW_EXCEPTION(unknown_error()
+                                << ex_msg("proxy injection handshake failed"));
+        }
+        spdlog::get("usvfs")->debug("proxy injection handshake successful");
       } break;
       }
     }

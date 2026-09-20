@@ -24,6 +24,9 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 #include <hooklib.h>
 #include <usvfsparameters.h>
 
+#include <array>
+#include <cstddef>
+
 namespace usvfs
 {
 
@@ -38,6 +41,16 @@ public:
   HookManager& operator=(const HookManager& reference) = delete;
 
   static HookManager& instance();
+  static HookManager* instanceIfPresent() noexcept;
+
+  static constexpr std::size_t MandatoryHookCount = 50;
+
+  std::size_t installedHookCount() const noexcept;
+  std::size_t passedProbeCount() const noexcept;
+  bool hookInstallationAttempted(std::size_t hookId) const noexcept;
+  bool hookInstallationSucceeded(std::size_t hookId) const noexcept;
+  bool hookProbeRun(std::size_t hookId) const noexcept;
+  bool hookProbePassed(std::size_t hookId) const noexcept;
 
   HookContext* context() { return &m_Context; }
 
@@ -66,14 +79,25 @@ private:
                    LPVOID hook, LPVOID* fillFuncAddr);
   void installStub(HMODULE module1, HMODULE module2, const std::string& functionName);
   void initHooks();
+  bool probeHooks();
   void removeHooks();
 
 private:
+  struct HookStatus
+  {
+    bool installAttempted = false;
+    bool installed        = false;
+    bool probeRun         = false;
+    bool probePassed      = false;
+  };
+
   static HookManager* s_Instance;
 
   std::map<std::string, HookLib::HOOKHANDLE> m_Hooks;
 
   std::map<LPVOID, std::string> m_Stubs;
+
+  std::array<HookStatus, MandatoryHookCount> m_HookStatuses{};
 
   HookContext m_Context;
 };

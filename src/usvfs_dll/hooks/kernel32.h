@@ -111,6 +111,29 @@ DLLEXPORT BOOL WINAPI hook_WritePrivateProfileStringW(LPCWSTR lpAppName,
                                                       LPCWSTR lpString,
                                                       LPCWSTR lpFileName);
 
+extern BOOL(WINAPI* SetFileInformationByHandle)(
+    HANDLE hFile, FILE_INFO_BY_HANDLE_CLASS FileInformationClass,
+    LPVOID lpFileInformation, DWORD dwBufferSize);
+DLLEXPORT BOOL WINAPI hook_SetFileInformationByHandle(
+    HANDLE hFile, FILE_INFO_BY_HANDLE_CLASS FileInformationClass,
+    LPVOID lpFileInformation, DWORD dwBufferSize);
+
+extern BOOL(WINAPI* DuplicateHandle)(
+    HANDLE hSourceProcessHandle, HANDLE hSourceHandle,
+    HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess,
+    BOOL bInheritHandle, DWORD dwOptions);
+DLLEXPORT BOOL WINAPI hook_DuplicateHandle(
+    HANDLE hSourceProcessHandle, HANDLE hSourceHandle,
+    HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess,
+    BOOL bInheritHandle, DWORD dwOptions);
+
+extern HANDLE(WINAPI* CreateFileMappingW)(
+    HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect,
+    DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCWSTR lpName);
+DLLEXPORT HANDLE WINAPI hook_CreateFileMappingW(
+    HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect,
+    DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCWSTR lpName);
+
 DLLEXPORT VOID WINAPI hook_ExitProcess(UINT exitCode);
 
 }  // namespace usvfs

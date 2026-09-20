@@ -39,6 +39,9 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 #include <hooks/kernel32.h>
 #include <hooks/ntdll.h>
 #include <logging.h>
+#include <mods_abi.h>
+#include <mods_controller.h>
+#include <mods_protocol.h>
 #include <stringcast.h>
 #include <unicodestring.h>
 #include <usvfs.h>
@@ -49,6 +52,604 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 namespace spd = spdlog;
 
 namespace ush = usvfs::shared;
+
+namespace
+{
+void appendU16(std::vector<uint8_t>& bytes, uint16_t value)
+{
+  bytes.push_back(static_cast<uint8_t>(value));
+  bytes.push_back(static_cast<uint8_t>(value >> 8));
+}
+
+void appendU32(std::vector<uint8_t>& bytes, uint32_t value)
+{
+  for (unsigned int shift = 0; shift < 32; shift += 8) {
+    bytes.push_back(static_cast<uint8_t>(value >> shift));
+  }
+}
+
+void appendU64(std::vector<uint8_t>& bytes, uint64_t value)
+{
+  for (unsigned int shift = 0; shift < 64; shift += 8) {
+    bytes.push_back(static_cast<uint8_t>(value >> shift));
+  }
+}
+
+std::vector<uint8_t> controllerFrame(uint16_t type, const uint8_t* executionId,
+                                     uint64_t requestId, const uint8_t* planHash,
+                                     uint64_t deltaVersion, uint64_t deadline,
+                                     std::vector<uint8_t> payload)
+{
+  std::vector<uint8_t> frame;
+  frame.reserve(MODS_USVFS_FRAME_HEADER_SIZE_V1 + payload.size());
+  frame.insert(frame.end(), {'M', 'V', 'F', 'S'});
+  appendU16(frame, MODS_USVFS_PROTOCOL_VERSION_V1);
+  appendU16(frame, type);
+  appendU32(frame, static_cast<uint32_t>(MODS_USVFS_FRAME_HEADER_SIZE_V1 +
+                                         payload.size()));
+  appendU32(frame, static_cast<uint32_t>(payload.size()));
+  frame.insert(frame.end(), executionId, executionId + 16);
+  appendU64(frame, requestId);
+  frame.insert(frame.end(), planHash, planHash + 32);
+  appendU64(frame, deltaVersion);
+  appendU64(frame, deadline);
+  frame.insert(frame.end(), payload.begin(), payload.end());
+  return frame;
+}
+
+class ModsControllerTest : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    mods_usvfs_execution_config_v1 config{};
+    config.struct_size              = sizeof(config);
+    config.abi_version              = MODS_USVFS_ABI_VERSION_V1;
+    std::fill(std::begin(config.execution_id), std::end(config.execution_id), 0x11);
+    static const uint16_t instanceName[] = {'m', 'o', 'd', 's', '-', 'a', 'b', 'i'};
+    static const uint16_t directory[]    = {'.'};
+    config.instance_name             = instanceName;
+    config.instance_name_length      = static_cast<uint32_t>(std::size(instanceName));
+    config.controller_directory      = directory;
+    config.controller_directory_length = static_cast<uint32_t>(std::size(directory));
+    config.channel_message_capacity  = 2;
+    config.channel_byte_capacity     = MODS_USVFS_EVENT_MAX_PAYLOAD_SIZE_V1;
+    config.initial_delta_version     = 0;
+
+    ASSERT_EQ(MODS_USVFS_RESULT_OK,
+              mods_usvfs_create_execution_v1(&config, &execution_));
+    std::fill(std::begin(executionId_), std::end(executionId_), 0x11);
+    std::fill(std::begin(planHash_), std::end(planHash_), 0x22);
+    const std::array<uint8_t, 4> planBytes{1, 2, 3, 4};
+    mods_usvfs_provider_plan_v1 plan{};
+    plan.struct_size = sizeof(plan);
+    plan.abi_version = MODS_USVFS_ABI_VERSION_V1;
+    plan.bytes       = planBytes.data();
+    plan.byte_length = static_cast<uint32_t>(planBytes.size());
+    std::memcpy(plan.sha256, planHash_, sizeof(plan.sha256));
+    ASSERT_EQ(MODS_USVFS_RESULT_OK,
+              mods_usvfs_load_provider_plan_v1(execution_, &plan));
+  }
+
+  void TearDown() override
+  {
+    mods_usvfs_destroy_execution_v1(execution_);
+  }
+
+  mods_usvfs_result accept(const std::vector<uint8_t>& frame,
+                           uint64_t now = 1)
+  {
+    mods_usvfs_frame_input_v1 input{};
+    input.struct_size         = sizeof(input);
+    input.abi_version         = MODS_USVFS_ABI_VERSION_V1;
+    input.frame               = frame.data();
+    input.frame_length        = static_cast<uint32_t>(frame.size());
+    input.now_monotonic_ticks = now;
+    return mods_usvfs_accept_frame_v1(execution_, &input);
+  }
+
+  mods_usvfs_execution_v1* execution_{nullptr};
+  uint8_t executionId_[16]{};
+  uint8_t planHash_[32]{};
+};
+}  // namespace
+
+TEST(ModsUsvfsControllerAbi, EveryInputAndOutputStructIsVersionPrefixed)
+{
+#define EXPECT_VERSION_PREFIX(type)                                                \
+  static_assert(offsetof(type, struct_size) == 0);                                 \
+  static_assert(offsetof(type, abi_version) == sizeof(uint32_t))
+  EXPECT_VERSION_PREFIX(mods_usvfs_execution_config_v1);
+  EXPECT_VERSION_PREFIX(mods_usvfs_provider_plan_v1);
+  EXPECT_VERSION_PREFIX(mods_usvfs_root_process_v1);
+  EXPECT_VERSION_PREFIX(mods_usvfs_frame_input_v1);
+  EXPECT_VERSION_PREFIX(mods_usvfs_message_v1);
+  EXPECT_VERSION_PREFIX(mods_usvfs_mutation_completion_v1);
+  EXPECT_VERSION_PREFIX(mods_usvfs_delta_v1);
+  EXPECT_VERSION_PREFIX(mods_usvfs_pid_buffer_v1);
+#undef EXPECT_VERSION_PREFIX
+}
+
+TEST(ModsUsvfsControllerAbi, RejectsUnsupportedVersionsAndUnboundedChannels)
+{
+  mods_usvfs_execution_v1* execution = nullptr;
+  const uint16_t name[] = {'t'};
+  mods_usvfs_execution_config_v1 config{};
+  config.struct_size             = sizeof(config);
+  config.abi_version             = MODS_USVFS_ABI_VERSION_V1 + 1;
+  config.execution_id[0]         = 1;
+  config.instance_name           = name;
+  config.instance_name_length    = 1;
+  config.channel_message_capacity = 1;
+  config.channel_byte_capacity   = 1;
+  EXPECT_EQ(MODS_USVFS_RESULT_UNSUPPORTED_ABI_VERSION,
+            mods_usvfs_create_execution_v1(&config, &execution));
+
+  config.abi_version              = MODS_USVFS_ABI_VERSION_V1;
+  config.channel_message_capacity = MODS_USVFS_MAX_CHANNEL_MESSAGES_V1 + 1;
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_ARGUMENT,
+            mods_usvfs_create_execution_v1(&config, &execution));
+  EXPECT_EQ(nullptr, execution);
+}
+
+TEST_F(ModsControllerTest, RejectsInvalidRootHandlesAndUsesCallerOwnedPidBuffers)
+{
+  mods_usvfs_root_process_v1 root{};
+  root.struct_size = sizeof(root);
+  root.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_NATIVE_HANDLE,
+            mods_usvfs_inject_root_v1(execution_, &root));
+  root.process_handle        = 1;
+  root.primary_thread_handle = 1;
+  EXPECT_EQ(MODS_USVFS_RESULT_UNSUPPORTED_OPERATION,
+            mods_usvfs_inject_root_v1(execution_, &root));
+
+  mods_usvfs_pid_buffer_v1 pids{};
+  pids.struct_size = sizeof(pids);
+  pids.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_query_attached_pids_v1(execution_, &pids));
+  EXPECT_EQ(0U, pids.required_count);
+}
+
+TEST(ModsUsvfsControllerAbi, PoisonBeforePlanPreventsLaterPlanLoading)
+{
+  mods_usvfs_execution_v1* execution = nullptr;
+  const uint16_t name[] = {'p', 'o', 'i', 's', 'o', 'n'};
+  mods_usvfs_execution_config_v1 config{};
+  config.struct_size              = sizeof(config);
+  config.abi_version              = MODS_USVFS_ABI_VERSION_V1;
+  config.instance_name            = name;
+  config.instance_name_length     = static_cast<uint32_t>(std::size(name));
+  config.channel_message_capacity = 1;
+  config.channel_byte_capacity    = 16;
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_create_execution_v1(&config, &execution));
+
+  std::array<uint8_t, MODS_USVFS_FRAME_HEADER_SIZE_V1> malformed{};
+  mods_usvfs_frame_input_v1 input{};
+  input.struct_size  = sizeof(input);
+  input.abi_version  = MODS_USVFS_ABI_VERSION_V1;
+  input.frame        = malformed.data();
+  input.frame_length = static_cast<uint32_t>(malformed.size());
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_FRAME,
+            mods_usvfs_accept_frame_v1(execution, &input));
+
+  const uint8_t planByte = 1;
+  mods_usvfs_provider_plan_v1 plan{};
+  plan.struct_size = sizeof(plan);
+  plan.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  plan.bytes       = &planByte;
+  plan.byte_length = 1;
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_STATE,
+            mods_usvfs_load_provider_plan_v1(execution, &plan));
+  mods_usvfs_destroy_execution_v1(execution);
+}
+
+TEST_F(ModsControllerTest, ProviderPlanIsImmutable)
+{
+  const std::array<uint8_t, 1> replacement{9};
+  mods_usvfs_provider_plan_v1 plan{};
+  plan.struct_size = sizeof(plan);
+  plan.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  plan.bytes       = replacement.data();
+  plan.byte_length = static_cast<uint32_t>(replacement.size());
+  std::memcpy(plan.sha256, planHash_, sizeof(plan.sha256));
+
+  EXPECT_EQ(MODS_USVFS_RESULT_PROVIDER_PLAN_ALREADY_LOADED,
+            mods_usvfs_load_provider_plan_v1(execution_, &plan));
+}
+
+TEST_F(ModsControllerTest, IdentityViolationPoisonsAnUnDroppableFatalState)
+{
+  auto frame = controllerFrame(MODS_USVFS_MESSAGE_HEALTH_EVENT, executionId_, 0,
+                               planHash_, 0, 0, {});
+  frame[16] ^= 0xff;
+  EXPECT_EQ(MODS_USVFS_RESULT_EXECUTION_MISMATCH, accept(frame));
+
+  std::array<uint8_t, 4> fatalPayload{};
+  mods_usvfs_message_v1 message{};
+  message.struct_size      = sizeof(message);
+  message.abi_version      = MODS_USVFS_ABI_VERSION_V1;
+  message.payload          = fatalPayload.data();
+  message.payload_capacity = static_cast<uint32_t>(fatalPayload.size());
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_poll_message_v1(execution_, &message));
+  EXPECT_EQ(MODS_USVFS_MESSAGE_KIND_FATAL, message.message_kind);
+  EXPECT_EQ(MODS_USVFS_RESULT_EXECUTION_MISMATCH, fatalPayload[0]);
+
+  fatalPayload.fill(0);
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_poll_message_v1(execution_, &message));
+  EXPECT_EQ(MODS_USVFS_RESULT_EXECUTION_MISMATCH, fatalPayload[0]);
+}
+
+TEST_F(ModsControllerTest, ProviderPlanMismatchPoisonsExecution)
+{
+  auto frame = controllerFrame(MODS_USVFS_MESSAGE_HEALTH_EVENT, executionId_, 0,
+                               planHash_, 0, 0, {});
+  frame[40] ^= 0xff;
+  EXPECT_EQ(MODS_USVFS_RESULT_PROVIDER_PLAN_MISMATCH, accept(frame));
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_STATE, accept(frame));
+}
+
+TEST_F(ModsControllerTest, PollPreservesMessagesWhenTheCallerBufferIsSmall)
+{
+  const auto frame = controllerFrame(
+      MODS_USVFS_MESSAGE_HEALTH_EVENT, executionId_, 0, planHash_, 0, 0,
+      std::vector<uint8_t>(4, 7));
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(frame));
+
+  std::array<uint8_t, 3> tooSmall{};
+  mods_usvfs_message_v1 message{};
+  message.struct_size      = sizeof(message);
+  message.abi_version      = MODS_USVFS_ABI_VERSION_V1;
+  message.payload          = tooSmall.data();
+  message.payload_capacity = static_cast<uint32_t>(tooSmall.size());
+  EXPECT_EQ(MODS_USVFS_RESULT_BUFFER_TOO_SMALL,
+            mods_usvfs_poll_message_v1(execution_, &message));
+  EXPECT_EQ(4U, message.payload_length);
+
+  std::array<uint8_t, 4> payload{};
+  message.payload          = payload.data();
+  message.payload_capacity = static_cast<uint32_t>(payload.size());
+  EXPECT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_poll_message_v1(execution_, &message));
+  EXPECT_EQ(MODS_USVFS_MESSAGE_KIND_HEALTH, message.message_kind);
+  EXPECT_EQ((std::array<uint8_t, 4>{7, 7, 7, 7}), payload);
+}
+
+TEST_F(ModsControllerTest, FullChannelPoisonsInsteadOfDroppingFatalState)
+{
+  const auto frame = controllerFrame(MODS_USVFS_MESSAGE_HEALTH_EVENT,
+                                     executionId_, 0, planHash_, 0, 0, {});
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(frame));
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(frame));
+  EXPECT_EQ(MODS_USVFS_RESULT_CHANNEL_FULL, accept(frame));
+
+  std::array<uint8_t, 4> payload{};
+  mods_usvfs_message_v1 message{};
+  message.struct_size      = sizeof(message);
+  message.abi_version      = MODS_USVFS_ABI_VERSION_V1;
+  message.payload          = payload.data();
+  message.payload_capacity = static_cast<uint32_t>(payload.size());
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_poll_message_v1(execution_, &message));
+  EXPECT_EQ(MODS_USVFS_MESSAGE_KIND_FATAL, message.message_kind);
+  EXPECT_EQ(MODS_USVFS_RESULT_CHANNEL_FULL, payload[0]);
+}
+
+TEST_F(ModsControllerTest, DeliveredMutationSlotsRemainBounded)
+{
+  std::array<uint8_t, 1> payload{};
+  mods_usvfs_message_v1 message{};
+  message.struct_size      = sizeof(message);
+  message.abi_version      = MODS_USVFS_ABI_VERSION_V1;
+  message.payload          = payload.data();
+  message.payload_capacity = static_cast<uint32_t>(payload.size());
+
+  for (uint64_t requestId : {UINT64_C(1), UINT64_C(2)}) {
+    const auto request = controllerFrame(
+        MODS_USVFS_MESSAGE_MUTATION_REQUEST, executionId_, requestId,
+        planHash_, 0, 100, std::vector<uint8_t>{1});
+    ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(request));
+    ASSERT_EQ(MODS_USVFS_RESULT_OK,
+              mods_usvfs_poll_message_v1(execution_, &message));
+  }
+
+  const auto overflow = controllerFrame(
+      MODS_USVFS_MESSAGE_MUTATION_REQUEST, executionId_, 3, planHash_, 0,
+      100, std::vector<uint8_t>{1});
+  EXPECT_EQ(MODS_USVFS_RESULT_CHANNEL_FULL, accept(overflow));
+}
+
+TEST_F(ModsControllerTest, PollPoisonsAQueuedMutationAfterItsDeadline)
+{
+  const auto request = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                       executionId_, 1, planHash_, 0, 5,
+                                       std::vector<uint8_t>{1});
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(request));
+
+  std::array<uint8_t, 4> payload{};
+  mods_usvfs_message_v1 message{};
+  message.struct_size         = sizeof(message);
+  message.abi_version         = MODS_USVFS_ABI_VERSION_V1;
+  message.now_monotonic_ticks = 5;
+  message.payload             = payload.data();
+  message.payload_capacity    = static_cast<uint32_t>(payload.size());
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_poll_message_v1(execution_, &message));
+  EXPECT_EQ(MODS_USVFS_MESSAGE_KIND_FATAL, message.message_kind);
+  EXPECT_EQ(MODS_USVFS_RESULT_DEADLINE_EXPIRED, payload[0]);
+}
+
+TEST_F(ModsControllerTest, ExpiredMutationPoisonsExecution)
+{
+  const auto request = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                       executionId_, 10, planHash_, 0, 100,
+                                       std::vector<uint8_t>{1});
+  EXPECT_EQ(MODS_USVFS_RESULT_DEADLINE_EXPIRED, accept(request, 100));
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_STATE, accept(request, 1));
+}
+
+TEST_F(ModsControllerTest, DuplicateMutationReplayPoisonsExecution)
+{
+  const auto request = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                       executionId_, 10, planHash_, 0, 100,
+                                       std::vector<uint8_t>{1});
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(request));
+  EXPECT_EQ(MODS_USVFS_RESULT_DUPLICATE_REQUEST, accept(request));
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_STATE, accept(request));
+}
+
+TEST_F(ModsControllerTest, StaleMutationReplayPoisonsExecution)
+{
+  const auto request = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                       executionId_, 10, planHash_, 0, 100,
+                                       std::vector<uint8_t>{1});
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(request));
+  const auto stale = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                     executionId_, 9, planHash_, 0, 100,
+                                     std::vector<uint8_t>{1});
+  EXPECT_EQ(MODS_USVFS_RESULT_STALE_REQUEST, accept(stale));
+}
+
+TEST_F(ModsControllerTest, ExpiredRequestWinsOverWrongDeltaVersion)
+{
+  const auto request = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                       executionId_, 1, planHash_, 9, 5,
+                                       std::vector<uint8_t>{1});
+  EXPECT_EQ(MODS_USVFS_RESULT_DEADLINE_EXPIRED, accept(request, 5));
+}
+
+TEST_F(ModsControllerTest, CompletingAnotherRequestDetectsAbandonedWork)
+{
+  std::array<uint8_t, 1> payload{};
+  mods_usvfs_message_v1 message{};
+  message.struct_size      = sizeof(message);
+  message.abi_version      = MODS_USVFS_ABI_VERSION_V1;
+  message.payload          = payload.data();
+  message.payload_capacity = static_cast<uint32_t>(payload.size());
+
+  const auto first = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                     executionId_, 1, planHash_, 0, 5,
+                                     std::vector<uint8_t>{1});
+  const auto second = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                      executionId_, 2, planHash_, 0, 100,
+                                      std::vector<uint8_t>{1});
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(first));
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_poll_message_v1(execution_, &message));
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(second));
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_poll_message_v1(execution_, &message));
+
+  mods_usvfs_mutation_completion_v1 completion{};
+  completion.struct_size = sizeof(completion);
+  completion.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  std::memcpy(completion.execution_id, executionId_, sizeof(executionId_));
+  completion.request_id = 2;
+  std::memcpy(completion.provider_plan_hash, planHash_, sizeof(planHash_));
+  completion.result              = MODS_USVFS_RESULT_INVALID_ARGUMENT;
+  completion.delta_version       = 0;
+  completion.now_monotonic_ticks = 10;
+  EXPECT_EQ(MODS_USVFS_RESULT_DEADLINE_EXPIRED,
+            mods_usvfs_complete_mutation_v1(execution_, &completion));
+}
+
+TEST_F(ModsControllerTest, OutOfOrderCompletionPoisonsExecution)
+{
+  const auto request = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                       executionId_, 1, planHash_, 0, 100,
+                                       std::vector<uint8_t>{9});
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(request));
+  std::array<uint8_t, 1> payload{};
+  mods_usvfs_message_v1 message{};
+  message.struct_size      = sizeof(message);
+  message.abi_version      = MODS_USVFS_ABI_VERSION_V1;
+  message.payload          = payload.data();
+  message.payload_capacity = static_cast<uint32_t>(payload.size());
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_poll_message_v1(execution_, &message));
+
+  mods_usvfs_mutation_completion_v1 completion{};
+  completion.struct_size = sizeof(completion);
+  completion.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  std::memcpy(completion.execution_id, executionId_, sizeof(executionId_));
+  completion.request_id = 1;
+  std::memcpy(completion.provider_plan_hash, planHash_, sizeof(planHash_));
+  completion.result        = MODS_USVFS_RESULT_OK;
+  completion.delta_version = 2;
+  EXPECT_EQ(MODS_USVFS_RESULT_UNEXPECTED_DELTA_VERSION,
+            mods_usvfs_complete_mutation_v1(execution_, &completion));
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_STATE,
+            mods_usvfs_complete_mutation_v1(execution_, &completion));
+}
+
+TEST_F(ModsControllerTest, PublishesOnlyTheCompletedStrictlyNextDelta)
+{
+  const auto request = controllerFrame(MODS_USVFS_MESSAGE_MUTATION_REQUEST,
+                                       executionId_, 1, planHash_, 0, 100,
+                                       std::vector<uint8_t>{9});
+  ASSERT_EQ(MODS_USVFS_RESULT_OK, accept(request));
+
+  std::array<uint8_t, 1> requestPayload{};
+  mods_usvfs_message_v1 message{};
+  message.struct_size      = sizeof(message);
+  message.abi_version      = MODS_USVFS_ABI_VERSION_V1;
+  message.payload          = requestPayload.data();
+  message.payload_capacity = static_cast<uint32_t>(requestPayload.size());
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_poll_message_v1(execution_, &message));
+
+  const std::array<uint8_t, 2> deltaBytes{4, 5};
+  mods_usvfs_mutation_completion_v1 completion{};
+  completion.struct_size = sizeof(completion);
+  completion.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  std::memcpy(completion.execution_id, executionId_, sizeof(executionId_));
+  completion.request_id = 1;
+  std::memcpy(completion.provider_plan_hash, planHash_, sizeof(planHash_));
+  completion.result        = MODS_USVFS_RESULT_OK;
+  completion.delta_version = 1;
+  completion.delta         = deltaBytes.data();
+  completion.delta_length  = static_cast<uint32_t>(deltaBytes.size());
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_complete_mutation_v1(execution_, &completion));
+
+  mods_usvfs_delta_v1 delta{};
+  delta.struct_size = sizeof(delta);
+  delta.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  std::memcpy(delta.execution_id, executionId_, sizeof(executionId_));
+  delta.request_id = 1;
+  std::memcpy(delta.provider_plan_hash, planHash_, sizeof(planHash_));
+  delta.delta_version = 1;
+  delta.bytes         = deltaBytes.data();
+  delta.byte_length   = static_cast<uint32_t>(deltaBytes.size());
+  ASSERT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_publish_delta_v1(execution_, &delta));
+  EXPECT_EQ(MODS_USVFS_RESULT_UNEXPECTED_DELTA_VERSION,
+            mods_usvfs_publish_delta_v1(execution_, &delta));
+
+  const auto currentVersion = controllerFrame(
+      MODS_USVFS_MESSAGE_HEALTH_EVENT, executionId_, 0, planHash_, 1, 0, {});
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_STATE, accept(currentVersion));
+}
+
+TEST(ModsUsvfsAbi, RejectsInvalidHealthOutput)
+{
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_ARGUMENT, mods_usvfs_get_health_v1(nullptr));
+
+  mods_usvfs_health_v1 tooSmall{};
+  tooSmall.struct_size = static_cast<uint32_t>(sizeof(tooSmall) - 1);
+  tooSmall.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_STRUCT_TOO_SMALL, mods_usvfs_get_health_v1(&tooSmall));
+
+  mods_usvfs_health_v1 unsupported{};
+  unsupported.struct_size = static_cast<uint32_t>(sizeof(unsupported));
+  unsupported.abi_version = MODS_USVFS_ABI_VERSION_V1 + 1;
+  EXPECT_EQ(MODS_USVFS_RESULT_UNSUPPORTED_ABI_VERSION,
+            mods_usvfs_get_health_v1(&unsupported));
+}
+
+TEST(ModsUsvfsAbi, ReportsStaticHandshakeBeforeHookInitialization)
+{
+  mods_usvfs_health_v1 health{};
+  health.struct_size = static_cast<uint32_t>(sizeof(health));
+  health.abi_version = MODS_USVFS_ABI_VERSION_V1;
+
+  EXPECT_EQ(MODS_USVFS_RESULT_NOT_INITIALIZED, mods_usvfs_get_health_v1(&health));
+  EXPECT_EQ(static_cast<uint32_t>(sizeof(health)), health.struct_size);
+  EXPECT_EQ(MODS_USVFS_ABI_VERSION_V1, health.abi_version);
+  EXPECT_EQ(MODS_USVFS_PROTOCOL_VERSION_V1, health.protocol_version);
+  EXPECT_EQ(MODS_USVFS_FORK_REVISION_V1, health.fork_revision);
+#if defined(_WIN64)
+  EXPECT_EQ(MODS_USVFS_ARCHITECTURE_X64, health.architecture);
+#else
+  EXPECT_EQ(MODS_USVFS_ARCHITECTURE_X86, health.architecture);
+#endif
+  EXPECT_EQ(MODS_USVFS_MANDATORY_HOOK_COUNT_V1, health.mandatory_hook_count);
+  EXPECT_EQ(MODS_USVFS_HOOK_MANIFEST_VERSION_V1, health.hook_manifest_version);
+  EXPECT_EQ(MODS_USVFS_CAPABILITIES_V1, health.capability_flags);
+  EXPECT_EQ(
+      UINT64_C(0),
+      health.capability_flags &
+          (MODS_USVFS_CAPABILITY_FAIL_CLOSED_DESCENDANT_HANDSHAKE |
+           MODS_USVFS_CAPABILITY_VIRTUAL_OPEN_REGISTRY |
+           MODS_USVFS_CAPABILITY_STEAM_COPY_ON_WRITE |
+           MODS_USVFS_CAPABILITY_PROVIDER_OWNED_TOMBSTONES |
+           MODS_USVFS_CAPABILITY_DURABLE_MUTATION_DELTAS |
+           MODS_USVFS_CAPABILITY_BOUNDED_EVENT_CHANNEL));
+  EXPECT_EQ(0U, health.installed_hook_count);
+  EXPECT_EQ(0U, health.passed_probe_count);
+}
+
+TEST(ModsUsvfsAbi, ValidatesAndReportsHookStatusBeforeInitialization)
+{
+  EXPECT_EQ(
+      MODS_USVFS_RESULT_INVALID_ARGUMENT,
+      mods_usvfs_get_hook_status_v1(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A, nullptr));
+
+  mods_usvfs_hook_status_v1 tooSmall{};
+  tooSmall.struct_size = static_cast<uint32_t>(sizeof(tooSmall) - 1);
+  tooSmall.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_STRUCT_TOO_SMALL,
+            mods_usvfs_get_hook_status_v1(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A,
+                                          &tooSmall));
+
+  mods_usvfs_hook_status_v1 unsupported{};
+  unsupported.struct_size = static_cast<uint32_t>(sizeof(unsupported));
+  unsupported.abi_version = MODS_USVFS_ABI_VERSION_V1 + 1;
+  EXPECT_EQ(MODS_USVFS_RESULT_UNSUPPORTED_ABI_VERSION,
+            mods_usvfs_get_hook_status_v1(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A,
+                                          &unsupported));
+
+  mods_usvfs_hook_status_v1 status{};
+  status.struct_size = static_cast<uint32_t>(sizeof(status));
+  status.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_HOOK_ID_OUT_OF_RANGE,
+            mods_usvfs_get_hook_status_v1(MODS_USVFS_MANDATORY_HOOK_COUNT_V1, &status));
+  EXPECT_EQ(
+      MODS_USVFS_RESULT_NOT_INITIALIZED,
+      mods_usvfs_get_hook_status_v1(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A, &status));
+  EXPECT_EQ(MODS_USVFS_HOOK_GET_FILE_ATTRIBUTES_EX_A, status.hook_id);
+  EXPECT_EQ(MODS_USVFS_HOOK_INSTALL_NOT_ATTEMPTED, status.install_status);
+  EXPECT_EQ(MODS_USVFS_HOOK_PROBE_NOT_RUN, status.probe_status);
+}
+
+TEST(ModsUsvfsProtocol, ValidatesAndDecodesBoundedFrameHeaders)
+{
+  std::array<uint8_t, MODS_USVFS_FRAME_HEADER_SIZE_V1> frame{};
+  std::memcpy(frame.data(), "MVFS", 4);
+  frame[4] = MODS_USVFS_PROTOCOL_VERSION_V1;
+  frame[6] = MODS_USVFS_MESSAGE_HEALTH_EVENT;
+  frame[8] = MODS_USVFS_FRAME_HEADER_SIZE_V1;
+  frame[32] = 7;
+  frame[72] = 3;
+
+  mods_usvfs_frame_header_v1 header{};
+  header.struct_size = sizeof(header);
+  header.abi_version = MODS_USVFS_ABI_VERSION_V1;
+  EXPECT_EQ(MODS_USVFS_RESULT_OK,
+            mods_usvfs_validate_frame_v1(frame.data(), frame.size(), &header));
+  EXPECT_EQ(MODS_USVFS_MESSAGE_HEALTH_EVENT, header.message_type);
+  EXPECT_EQ(7U, header.request_id);
+  EXPECT_EQ(3U, header.expected_delta_version);
+  EXPECT_EQ(0U, header.payload_length);
+}
+
+TEST(ModsUsvfsProtocol, RejectsInvalidAndOversizedFrames)
+{
+  std::array<uint8_t, MODS_USVFS_FRAME_HEADER_SIZE_V1> frame{};
+  mods_usvfs_frame_header_v1 header{};
+  header.struct_size = sizeof(header);
+  header.abi_version = MODS_USVFS_ABI_VERSION_V1;
+
+  EXPECT_EQ(MODS_USVFS_RESULT_INVALID_FRAME,
+            mods_usvfs_validate_frame_v1(frame.data(), frame.size(), &header));
+  EXPECT_EQ(MODS_USVFS_RESULT_FRAME_TOO_LARGE,
+            mods_usvfs_validate_frame_v1(
+                frame.data(), MODS_USVFS_FRAME_MAX_SIZE_V1 + 1, &header));
+}
 
 // name of a file to be created in the virtual fs. Shouldn't exist on disc but the
 // directory must exist
@@ -161,6 +762,19 @@ public:
 
 private:
 };
+
+TEST_F(USVFSTestAuto, DisablesBlacklistAndMohiddenSkipping)
+{
+  usvfsBlacklistExecutable(L"notepad.exe");
+  usvfsAddSkipFileSuffix(L".MoHidden");
+  usvfsAddSkipFileSuffix(L".skip");
+
+  auto context = usvfs::HookContext::readAccess(__FUNCTION__);
+  EXPECT_FALSE(context->executableBlacklisted(L"C:\\Windows\\notepad.exe", nullptr));
+  EXPECT_THAT(context->skipFileSuffixes(),
+              ::testing::Not(::testing::Contains(".MoHidden")));
+  EXPECT_THAT(context->skipFileSuffixes(), ::testing::Contains(".skip"));
+}
 
 TEST_F(USVFSTest, CanResizeRedirectiontree)
 {
