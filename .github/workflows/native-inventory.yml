@@ -20,10 +20,22 @@ jobs:
           ref: 74e6536215718009aae747d86d84b78376bf9e09
           path: .stage-tools/vcpkg
           persist-credentials: false
+      - name: Check source collector helpers
+        shell: pwsh
+        run: ./packaging/test-collect-sources.ps1
       - name: Build both Release architectures and record local evidence
         shell: pwsh
         run: ./packaging/stage-native.ps1 -VcpkgRoot "$PWD/.stage-tools/vcpkg" -OutputDirectory "$env:RUNNER_TEMP/usvfs-stage"
-      # Only script-authored text reports are uploaded, never binaries or caches.
+      - name: Collect verified source inputs (completeness UNVERIFIED)
+        shell: pwsh
+        run: ./packaging/collect-sources.ps1 -VcpkgRoot "$PWD/.stage-tools/vcpkg" -StageDirectory "$env:RUNNER_TEMP/usvfs-stage"
+      - name: Save source-only candidate for review (not a release)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: source-candidate-UNVERIFIED-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/usvfs-stage/source-candidate-UNVERIFIED.tar.gz
+          if-no-files-found: error
+      # Reports remain available on failures. Never upload partial source directories.
       - name: Save inventory reports, including failed build evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
