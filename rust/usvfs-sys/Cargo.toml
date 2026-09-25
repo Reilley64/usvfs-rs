@@ -1,0 +1,21 @@
+[package]
+name = "usvfs-sys"
+version = "0.0.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+publish = false
+links = "mods_usvfs_barrier"
+
+[build-dependencies]
+bindgen = "0.72.1"
+cc = "1.4.7"
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"

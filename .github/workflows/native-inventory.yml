@@ -1,0 +1,37 @@
+name: Native staging and source inventory (not a release)
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/rust-release-packaging]
+    paths: ["packaging/**", ".github/workflows/native-inventory.yml"]
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: microsoft/vcpkg
+          ref: 74e6536215718009aae747d86d84b78376bf9e09
+          path: .stage-tools/vcpkg
+          persist-credentials: false
+      - name: Build both Release architectures and record local evidence
+        shell: pwsh
+        run: ./packaging/stage-native.ps1 -VcpkgRoot "$PWD/.stage-tools/vcpkg" -OutputDirectory "$env:RUNNER_TEMP/usvfs-stage"
+      # Only script-authored text reports are uploaded, never binaries or caches.
+      - name: Save inventory reports, including failed build evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-source-inventory-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/usvfs-stage/reports/*.json
+          if-no-files-found: error
+      - name: Publication gate (intentionally blocked)
+        if: always()
+        shell: pwsh
+        run: ./packaging/assert-release-ready.ps1
