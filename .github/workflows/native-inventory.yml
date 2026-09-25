@@ -1,9 +1,6 @@
 name: Native staging and source inventory (not a release)
 on:
   workflow_dispatch:
-  push:
-    branches: [feat/rust-release-packaging]
-    paths: ["packaging/**", ".github/workflows/native-inventory.yml"]
 permissions:
   contents: read
 jobs:
@@ -56,7 +53,6 @@ jobs:
           name: native-source-inventory-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/usvfs-stage/reports/*.json
           if-no-files-found: error
-      - name: Publication gate (intentionally blocked)
-        if: always()
+      - name: Report successful source validation
         shell: pwsh
-        run: ./packaging/assert-release-ready.ps1
+        run: Write-Output "Source checks passed. This workflow does not publish binaries."

@@ -1,4 +1,4 @@
-# Archive-only library-source rebuild validator (Windows validation pending)
+# Archive-only library-source rebuild validator
 
 Run immediately after `collect-sources.ps1`, on the same Windows runner:
 
@@ -48,8 +48,9 @@ Both original presets build Release INSTALL with BUILD_TESTING=OFF and inherited
 four outputs. No runtime or injection tests run. No PE byte-reproducibility claim
 is made. Publication and source-completeness gates remain blocked.
 
-Local check: PowerShell parser on macOS only. Windows build validation is not
-available locally; this script is not yet demonstrated on Windows.
+Windows run 36084606525 passed both rebuilds with origin fallback blocked and
+identical package/version/feature/triplet identities. The separately provisioned
+helper archives were hash-verified and were not included in the source bundle.
 
 ## API evidence consulted
 

@@ -1,0 +1,75 @@
+# Build matched release assets; publication remains an explicit reviewed action.
+name: Native release preparation
+on:
+  push:
+    branches: [feat/rust-release-packaging]
+    paths: ["packaging/package-release.ps1", "packaging/source-approval.json", ".github/workflows/native-release.yml"]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Immutable proposed tag (do not retarget an existing tag)
+        required: true
+        default: usvfs-0.5.7.2-rs.1
+      root_publish_approval:
+        description: Reserved for a future root-reviewed publication change
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: microsoft/vcpkg
+          ref: 74e6536215718009aae747d86d84b78376bf9e09
+          path: .stage-tools/vcpkg
+          persist-credentials: false
+      - name: Check source collector helpers
+        shell: pwsh
+        run: |
+          ./packaging/test-collect-sources.ps1
+          ./packaging/test-rebuild-sources.ps1
+      - name: Build both Release architectures and record local evidence
+        shell: pwsh
+        run: ./packaging/stage-native.ps1 -VcpkgRoot "$PWD/.stage-tools/vcpkg" -OutputDirectory "$env:RUNNER_TEMP/usvfs-stage"
+      - name: Collect verified source inputs (completeness UNVERIFIED)
+        shell: pwsh
+        run: ./packaging/collect-sources.ps1 -VcpkgRoot "$PWD/.stage-tools/vcpkg" -StageDirectory "$env:RUNNER_TEMP/usvfs-stage"
+      - name: Rebuild the same candidate for both architectures
+        shell: pwsh
+        run: ./packaging/rebuild-sources.ps1 -StageDirectory "$env:RUNNER_TEMP/usvfs-stage" -VcpkgRoot "$PWD/.stage-tools/vcpkg" -OutputDirectory "$env:RUNNER_TEMP/usvfs-source-rebuild"
+      - name: Enforce immutable proposed tag
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || 'usvfs-0.5.7.2-rs.1' }}
+        run: |
+          if ($env:RELEASE_TAG -cne 'usvfs-0.5.7.2-rs.1') { throw 'Unapproved release tag' }
+          $existing = git ls-remote --tags origin "refs/tags/$env:RELEASE_TAG"
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot verify remote tag absence' }
+          if ($existing) { throw 'Tag already exists; never retarget it' }
+      - name: Package only after frozen root approval
+        shell: pwsh
+        run: ./packaging/package-release.ps1 -StageDirectory "$env:RUNNER_TEMP/usvfs-stage" -RebuildDirectory "$env:RUNNER_TEMP/usvfs-source-rebuild" -OutputDirectory "$env:RUNNER_TEMP/usvfs-release"
+      - name: Save matched source and native packages (not publication)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-preparation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/usvfs-release/*.zip
+            ${{ runner.temp }}/usvfs-release/*.tar.gz
+            ${{ runner.temp }}/usvfs-release/release.json
+          if-no-files-found: error
+  publish:
+    # Root must review and implement an atomic matched-asset publication step.
+    # An input alone cannot activate publishing, even when true.
+    if: ${{ false }}
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Publication is not implemented. Do not create or move tags."

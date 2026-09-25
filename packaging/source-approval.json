@@ -1,0 +1,957 @@
+{
+  "schema": 1,
+  "reviewStatus": "approved",
+  "noticesReviewStatus": "approved",
+  "tag": "usvfs-0.5.7.2-rs.1",
+  "reviewedRebuildRunUrl": "https://github.com/Reilley64/usvfs-rs/actions/runs/36084606525",
+  "auditCandidateRun": "36083047408",
+  "recipes": [
+    {
+      "path": "overlay-ports/asmjit/asmjit.patch",
+      "sha256": "72f157474f7684bdd8885372ef230ec4a844aae655dfa78264966ea4e8039fcf"
+    },
+    {
+      "path": "overlay-ports/asmjit/portfile.cmake",
+      "sha256": "eb16ceeba368b5520390ce0f9f1e4eb32f1554a7cbdce677dc0a66526cd15a1e"
+    },
+    {
+      "path": "overlay-ports/asmjit/vcpkg.json",
+      "sha256": "8047a9984c0dedfc62c08532d5b2b6d4aaa04cbe13451caee130b965c87506e9"
+    },
+    {
+      "path": "overlay-ports/boost-algorithm/portfile.cmake",
+      "sha256": "80737c9e13427367bf452295675c6e34a84fbd72031608399a37cfed200aa400"
+    },
+    {
+      "path": "overlay-ports/boost-algorithm/vcpkg.json",
+      "sha256": "814526c2aa17f44f13402feec041c0c020d6bafee24197fc5fd4425628fffb8b"
+    },
+    {
+      "path": "overlay-ports/boost-align/portfile.cmake",
+      "sha256": "eff4c9461860d0026386602d0616c2d967b5336471604d78e514d358c02eb95c"
+    },
+    {
+      "path": "overlay-ports/boost-align/vcpkg.json",
+      "sha256": "b61a328ff78ab3e62fdf78585560251381295ea9cf03879aeeddc839203bff45"
+    },
+    {
+      "path": "overlay-ports/boost-any/portfile.cmake",
+      "sha256": "5e2cb625e5e05b2203011ab7fcdbbc5e83bf763f6fb46d4badd619bea9d84196"
+    },
+    {
+      "path": "overlay-ports/boost-any/vcpkg.json",
+      "sha256": "8621fb9bec8252e6222fb252a225c1c5feebc4afbf5bb1c27bcd0827362843af"
+    },
+    {
+      "path": "overlay-ports/boost-array/portfile.cmake",
+      "sha256": "4d34ab0acc5499ce78bfbd07442a8c810136942b84ed933143cc213b6d46654a"
+    },
+    {
+      "path": "overlay-ports/boost-array/vcpkg.json",
+      "sha256": "1d19fe941e5fc48cb9d42c25798958fc7b79759ac5a93c5c8acbef52cc484e4a"
+    },
+    {
+      "path": "overlay-ports/boost-assert/portfile.cmake",
+      "sha256": "16fd7189cff542c292a8e8d9c8462645f9d9da6052b276863e9a5d6aa630a5ce"
+    },
+    {
+      "path": "overlay-ports/boost-assert/vcpkg.json",
+      "sha256": "0dccdd180024eb58d41d84de135b6b0d32afcd683b19787158d9ea249f2ed877"
+    },
+    {
+      "path": "overlay-ports/boost-atomic/fix-include.patch",
+      "sha256": "8349c71529f246ef9ba0aa31de7267006ec45a75e5afb91354a598830fd5f0c0"
+    },
+    {
+      "path": "overlay-ports/boost-atomic/portfile.cmake",
+      "sha256": "c14a9b8f06de94d8f17a73198b1851166868036ff864e47b5f8225599dd517d3"
+    },
+    {
+      "path": "overlay-ports/boost-atomic/vcpkg.json",
+      "sha256": "29a32cbd0a5284434f8edf36d18f3ba9dd15a8b3d1295165a84932a25f2d7b01"
+    },
+    {
+      "path": "overlay-ports/boost-bind/portfile.cmake",
+      "sha256": "13a131ef7a1f6fff1b476533de2c7dd56ff92dabe0ff71b75dd9a2d4080b05c8"
+    },
+    {
+      "path": "overlay-ports/boost-bind/vcpkg.json",
+      "sha256": "eb96ca4ef61cc748c64de1823a4c90f5f6a9595de2ef31ef103e63aa3e07bcbd"
+    },
+    {
+      "path": "overlay-ports/boost-charconv/portfile.cmake",
+      "sha256": "dd5d00bfd468a6c8ffcf36629b24f2353fc7db9ed0f29a693ca721a3604ee6c4"
+    },
+    {
+      "path": "overlay-ports/boost-charconv/vcpkg.json",
+      "sha256": "f4562f2c92786b5743902ff2f278723e4a8d4716c6d5536d95386ec748d53396"
+    },
+    {
+      "path": "overlay-ports/boost-chrono/portfile.cmake",
+      "sha256": "ed8fa6bf95cc8bb4e9466255a81db8a61029db97575cd7c6da64d78e39dd933e"
+    },
+    {
+      "path": "overlay-ports/boost-chrono/vcpkg.json",
+      "sha256": "b5080701da5473246f4db93f1819ca12a132d8ef9ac7d50f7bf9ea58434337e3"
+    },
+    {
+      "path": "overlay-ports/boost-cmake/0001-vcpkg-build.patch",
+      "sha256": "764334006e41fea078b15cb018cc84f202c99c1b4a4877bf10b3fff68613e444"
+    },
+    {
+      "path": "overlay-ports/boost-cmake/0002-remove-prefix-and-suffix.patch",
+      "sha256": "93843823d495e127e8eaff3845986b784a0fa3428cd20d29eda444324daf0999"
+    },
+    {
+      "path": "overlay-ports/boost-cmake/CMakeLists.txt.in",
+      "sha256": "72494ddb00ff2d8cc7c45d3326fe2b0598760e23f751597d3ae7fe757c788a59"
+    },
+    {
+      "path": "overlay-ports/boost-cmake/portfile.cmake",
+      "sha256": "90cc787306101acd5a9cbb867215360dcd208ea0d9110005d8c8e2002c59c42d"
+    },
+    {
+      "path": "overlay-ports/boost-cmake/usage",
+      "sha256": "9e0ff3b7b8eaa953a1d04a866685e9c9c0dcfcc935f1478410f41ddf623f3a62"
+    },
+    {
+      "path": "overlay-ports/boost-cmake/vcpkg-port-config.cmake",
+      "sha256": "b78bffe3cced9519475c61e4b4da05976026ab7257bee7b13e2b0d11a1a40667"
+    },
+    {
+      "path": "overlay-ports/boost-cmake/vcpkg.json",
+      "sha256": "ef79d107695c544e684be02801c6ff313ad7adc4e10b960eb7f40da28956f306"
+    },
+    {
+      "path": "overlay-ports/boost-concept-check/portfile.cmake",
+      "sha256": "2a249307422976d62a1ac3cd5561d449aeaa2b7375e35982f3260160ebeec6b7"
+    },
+    {
+      "path": "overlay-ports/boost-concept-check/vcpkg.json",
+      "sha256": "d67d7c1fadefcda29408efc9c9bcea960e16e6c1446ba8ccb8e419435a76e71e"
+    },
+    {
+      "path": "overlay-ports/boost-config/portfile.cmake",
+      "sha256": "0c299ead816dea67c6fb20400f0d18e2170c8e3872fe748bf82b377670fe14d5"
+    },
+    {
+      "path": "overlay-ports/boost-config/vcpkg.json",
+      "sha256": "a6ac4e0a325bcd779690ba136692d11f060a7a6664fe4aa7178819e8e9dec448"
+    },
+    {
+      "path": "overlay-ports/boost-container/fix_msvc_c4146_warnings.diff",
+      "sha256": "2486321fe0ada91acbfab8b186d05e26a2e773608a1236d92eb1a8909675d04f"
+    },
+    {
+      "path": "overlay-ports/boost-container/portfile.cmake",
+      "sha256": "3dfc41fc8ecb16274594e910ab47bf9f1e612f622046e37ad184b838ed5ad7be"
+    },
+    {
+      "path": "overlay-ports/boost-container/posix-threads.diff",
+      "sha256": "94aff70844c47aed2a5460b63d92527e6557780beea19037ee949f9a8d3a42a5"
+    },
+    {
+      "path": "overlay-ports/boost-container/vcpkg.json",
+      "sha256": "8bf07ea2e0bf3908d91ac1af9cfc47ffc661c4d5de385a5ab2364a200cc1d218"
+    },
+    {
+      "path": "overlay-ports/boost-container-hash/portfile.cmake",
+      "sha256": "81fe2f6c5ca6ab220913547353a945ba62d6392e3773f4cd4a146202ce8f1289"
+    },
+    {
+      "path": "overlay-ports/boost-container-hash/vcpkg.json",
+      "sha256": "b2f56b8af4fd07dc6c6669153dc674863cd7d9234fac170b5a07d70a7a468337"
+    },
+    {
+      "path": "overlay-ports/boost-conversion/portfile.cmake",
+      "sha256": "d77609551f3ca4fdaa0225e46c7fc37f02086f14603a47ecc37802e2aded0eee"
+    },
+    {
+      "path": "overlay-ports/boost-conversion/vcpkg.json",
+      "sha256": "790062aa48e0726b9b51ea3dc819d646a3aa114383a89ffbd7531f774cd6070d"
+    },
+    {
+      "path": "overlay-ports/boost-core/portfile.cmake",
+      "sha256": "8e4d4f98eb3cdbade790c57c462ed32a0cb6ad44ae00b5ee0e29366cca170e93"
+    },
+    {
+      "path": "overlay-ports/boost-core/vcpkg.json",
+      "sha256": "c98b02dc32f6d8eedb6bff669b181151b95365c7e7ae07bbe8fa0ca52c6f251c"
+    },
+    {
+      "path": "overlay-ports/boost-date-time/portfile.cmake",
+      "sha256": "24c77f3639650551be24e20450ff11bdc73f4600f6ead21a70d9986d3b9d72fb"
+    },
+    {
+      "path": "overlay-ports/boost-date-time/vcpkg.json",
+      "sha256": "fbb7b43bb6ca12fc03ef2200c22656772ffa012b39f6c965df3012b0c8cc8445"
+    },
+    {
+      "path": "overlay-ports/boost-describe/portfile.cmake",
+      "sha256": "03b3b4bfe14904608f62cbddbc910f71119d4d523c8d606bf15278fd777dddaa"
+    },
+    {
+      "path": "overlay-ports/boost-describe/vcpkg.json",
+      "sha256": "fbe9cdd95bdb6cfad393792548374eecec5a3689ea66d124a1846a3e3d8b9efe"
+    },
+    {
+      "path": "overlay-ports/boost-detail/portfile.cmake",
+      "sha256": "d2c335d7a1bf38d689d32d812ac8f38c928ba1f0e1aaaab6fc18c7ebbea47486"
+    },
+    {
+      "path": "overlay-ports/boost-detail/vcpkg.json",
+      "sha256": "d1ad4d78c8e9b09969b1d3ceeb7e76d38dd81b4444729ff0746ec510a3e2412f"
+    },
+    {
+      "path": "overlay-ports/boost-dll/0001-fix-build.patch",
+      "sha256": "5e80a2730244c1d9d2ccef392af1a7438cf126bbdd21afb1ba61fbf65a022a83"
+    },
+    {
+      "path": "overlay-ports/boost-dll/portfile.cmake",
+      "sha256": "f2ca8fa977499dd2decae01230d509169e1d71cf713664df061a1d6db2441a15"
+    },
+    {
+      "path": "overlay-ports/boost-dll/vcpkg.json",
+      "sha256": "392aaafd5f5e18218a2cff0ff5ef232091ff42a1bf62a5c18d4e593c3b13530a"
+    },
+    {
+      "path": "overlay-ports/boost-exception/features.cmake",
+      "sha256": "2f1215b74121b1b8ed4b0ff081fc28e794471e51e21b75920e22a71bfd72a14d"
+    },
+    {
+      "path": "overlay-ports/boost-exception/portfile.cmake",
+      "sha256": "d1cf4a0bd6c0cdd2bc8782a838449f3dd55a7007420392c181a723e233221db1"
+    },
+    {
+      "path": "overlay-ports/boost-exception/vcpkg.json",
+      "sha256": "1be9d5eca6d7eee3ea83a907e2fec837a275273bba883803e18d0e5dc02f3fd2"
+    },
+    {
+      "path": "overlay-ports/boost-filesystem/portfile.cmake",
+      "sha256": "9814442a5db3aed41ba5acf790cfff83ea8c1cf2194d4ffd822214c306d93c45"
+    },
+    {
+      "path": "overlay-ports/boost-filesystem/vcpkg.json",
+      "sha256": "66697b7b4938327bde0463a7db914e0eea38c9542167299009e304bc52ed8942"
+    },
+    {
+      "path": "overlay-ports/boost-format/portfile.cmake",
+      "sha256": "ed8fe5ebcf05f7fe20a78612705f78b5c46634d33f0811056552b9d8bebb9ff7"
+    },
+    {
+      "path": "overlay-ports/boost-format/vcpkg.json",
+      "sha256": "d671c12ac2d206f9ea15adc2b5aad33d1858b7e5709d49ce593933e3162a31ed"
+    },
+    {
+      "path": "overlay-ports/boost-function/portfile.cmake",
+      "sha256": "c57ca37d88acea513c83cc293add117664ee0f2e8df6588a9f9f06a43b82c95c"
+    },
+    {
+      "path": "overlay-ports/boost-function/vcpkg.json",
+      "sha256": "285ca5bf1aed2fc00a6386792bb0d0c3d41d4bb795167e9c2a299edf174a892a"
+    },
+    {
+      "path": "overlay-ports/boost-function-types/portfile.cmake",
+      "sha256": "90af918c7aed1a9811a47668bf675ecb68ee2fed4abc9eff3ce3b66f90ffec28"
+    },
+    {
+      "path": "overlay-ports/boost-function-types/vcpkg.json",
+      "sha256": "50381f57d57044568000a07d9a34d37cab32850083c33562aa5f7d4162e56680"
+    },
+    {
+      "path": "overlay-ports/boost-functional/portfile.cmake",
+      "sha256": "70f143ed1f4136db0ef670404035c37325e30363b1d43e11704bc276450d0332"
+    },
+    {
+      "path": "overlay-ports/boost-functional/vcpkg.json",
+      "sha256": "b7601dcfb0268c3475a385c24f70bb88bda67164330e223a10076ca876715c5c"
+    },
+    {
+      "path": "overlay-ports/boost-fusion/portfile.cmake",
+      "sha256": "7ac701a04b1fb922e55b5c6969422c56a316406b2d9a663eebd7145d6589c577"
+    },
+    {
+      "path": "overlay-ports/boost-fusion/vcpkg.json",
+      "sha256": "b9aacc5a910b227ae8129a0f2fddb7cdfeecfe6b1a265f5356740fb51b16d01b"
+    },
+    {
+      "path": "overlay-ports/boost-headers/portfile.cmake",
+      "sha256": "51169ef2681148a36988b52f38ec1a7ccb026011182a6179cbaa54daaeebd77c"
+    },
+    {
+      "path": "overlay-ports/boost-headers/vcpkg.json",
+      "sha256": "978384c07cfb462d443ea7cb50d3e02cbfdee47632ac67802eb3e96b73f14268"
+    },
+    {
+      "path": "overlay-ports/boost-integer/portfile.cmake",
+      "sha256": "7ede3b484a17bfb027dcf6930e1dbedfea96deae51bf5b3a374a856b805ab58b"
+    },
+    {
+      "path": "overlay-ports/boost-integer/vcpkg.json",
+      "sha256": "26a0de3f764a3aeb63b9880c746732083caa3551d162c6737112f2806f49c19d"
+    },
+    {
+      "path": "overlay-ports/boost-interprocess/portfile.cmake",
+      "sha256": "df9d29039054bc937aa144a13e2d625c948ad99c8bd8b9b06fb797816e38d0d3"
+    },
+    {
+      "path": "overlay-ports/boost-interprocess/vcpkg.json",
+      "sha256": "85aae4feb2ead7041c5776d456a351b9afc97812540e2c1405271d6c180d8ef8"
+    },
+    {
+      "path": "overlay-ports/boost-intrusive/portfile.cmake",
+      "sha256": "c501c502981218c143031b7fb6458fde01984905fefc0715d8848eb2c99fd644"
+    },
+    {
+      "path": "overlay-ports/boost-intrusive/vcpkg.json",
+      "sha256": "ea3ba3e2791d88bda2449f2d140757615ade9db3ae8872d4b6e36538db82207e"
+    },
+    {
+      "path": "overlay-ports/boost-io/portfile.cmake",
+      "sha256": "3a3ee548b5d5abf41ac06cbd8e64c9c4e70ec07501af1dd5e56ebc22f4cdadb6"
+    },
+    {
+      "path": "overlay-ports/boost-io/vcpkg.json",
+      "sha256": "aae11cec0c7a0d1fa6d5bfa1748a9c4ef8aa542efd60c9309aaa58fa6f360c68"
+    },
+    {
+      "path": "overlay-ports/boost-iterator/portfile.cmake",
+      "sha256": "5426517f18d63bc39f72abd3dc73c1e933ac4c9399b2ac72c3e2595c0e0b9d8e"
+    },
+    {
+      "path": "overlay-ports/boost-iterator/vcpkg.json",
+      "sha256": "ca7950bee0cbb25a11cc16830807710f02970fc2d22b948b3bebffdd931a21cf"
+    },
+    {
+      "path": "overlay-ports/boost-lexical-cast/portfile.cmake",
+      "sha256": "528dc651a898c86be840a75d04483a5d8584a1071242d5e9c1b326127d03c5a2"
+    },
+    {
+      "path": "overlay-ports/boost-lexical-cast/vcpkg.json",
+      "sha256": "83a13b48e4bab01c4eab772e7e49371e0309d2e0e6e040fc4e9a692284f15079"
+    },
+    {
+      "path": "overlay-ports/boost-locale/features.cmake",
+      "sha256": "a162220ef923c3cfe1aae91fec29923738fade8d17dedf9d20afc0fd9bb6e9d7"
+    },
+    {
+      "path": "overlay-ports/boost-locale/portfile.cmake",
+      "sha256": "568a2371d786f2aeb3c2c01d4d009607105608dfb749facac19d33523a4198f1"
+    },
+    {
+      "path": "overlay-ports/boost-locale/vcpkg.json",
+      "sha256": "0344ecfb617cb5651bb83afe3fb1441b13a9c4f20d6a6be0fe317318eac96385"
+    },
+    {
+      "path": "overlay-ports/boost-move/portfile.cmake",
+      "sha256": "c077d8b2cfb88d0f73137e01aca95427414f69728384ae8580b1780d269a6a1f"
+    },
+    {
+      "path": "overlay-ports/boost-move/vcpkg.json",
+      "sha256": "c82be4dbe4ca8c61b569d79dee5d28cd151c21542fed9eb0196a4ba450ceb70c"
+    },
+    {
+      "path": "overlay-ports/boost-mp11/portfile.cmake",
+      "sha256": "63ead4030a84c942506847d7660bdc21a1a1f7e71679cfd6a261d6a38360ac4d"
+    },
+    {
+      "path": "overlay-ports/boost-mp11/vcpkg.json",
+      "sha256": "96b8dea867ef5cbc49b9bc5f6d3e4a09897f2f84f86fa2f9ededa3f6e0f9b9c1"
+    },
+    {
+      "path": "overlay-ports/boost-mpl/portfile.cmake",
+      "sha256": "bb0e4ba4033c1faea355edcf71b8cc64f7c6080122049b72547ac2dcd753402d"
+    },
+    {
+      "path": "overlay-ports/boost-mpl/vcpkg.json",
+      "sha256": "b10871906f448e4def3479accecdecc77fec07d426898157e50591375342c4e4"
+    },
+    {
+      "path": "overlay-ports/boost-multi-index/portfile.cmake",
+      "sha256": "7244293346fdab2cb80f6016359fb90bdc006723f4a41a2659635ee37305a1a0"
+    },
+    {
+      "path": "overlay-ports/boost-multi-index/vcpkg.json",
+      "sha256": "1ebb991825b5d3546d05bbb356bbe8283f00a02f8496a76505b551d38c327d8f"
+    },
+    {
+      "path": "overlay-ports/boost-numeric-conversion/portfile.cmake",
+      "sha256": "9ac2ffd16eee93d904942ad47c7fa9f6eab2bd4ba06456bf6d59da7454221104"
+    },
+    {
+      "path": "overlay-ports/boost-numeric-conversion/vcpkg.json",
+      "sha256": "12d4db2ccc0cce6c9d0b205730277de433c7974f65ed3379d2ff9f872cb97965"
+    },
+    {
+      "path": "overlay-ports/boost-optional/portfile.cmake",
+      "sha256": "38f4db2a0fb5fd9c6995f9e409a8f06b2904b6d9f3ac25120842f1a1ba67ec0c"
+    },
+    {
+      "path": "overlay-ports/boost-optional/vcpkg.json",
+      "sha256": "935ebb119d31b58f6e1a00a60cf8c67655e46f1ef34d53526bb4f1518398b934"
+    },
+    {
+      "path": "overlay-ports/boost-predef/portfile.cmake",
+      "sha256": "7b26f2618291ce1d44705d6ee14d521ec85b25597f53319cc3a015a875929cde"
+    },
+    {
+      "path": "overlay-ports/boost-predef/vcpkg.json",
+      "sha256": "4afd767d4f7680a91719b4d2ed1c05299749bfd5b7476143afdbb296f7f4a77e"
+    },
+    {
+      "path": "overlay-ports/boost-preprocessor/portfile.cmake",
+      "sha256": "e0e052337b44a269fc63737e904b4ad3231491e06bdd323ce4161f5cff69aede"
+    },
+    {
+      "path": "overlay-ports/boost-preprocessor/vcpkg.json",
+      "sha256": "c279ac7b8fc1b18d1bd4a15cd2ff58135a00ba71af995833f46c333378291375"
+    },
+    {
+      "path": "overlay-ports/boost-range/portfile.cmake",
+      "sha256": "a3fc25f43fc18ad827a327f6bc6a9b0aaf38e020d154901d39c363c890d21edf"
+    },
+    {
+      "path": "overlay-ports/boost-range/vcpkg.json",
+      "sha256": "5790d239d1379f2c62516e155673e2be29296ff785c075298e9d6f4078defed4"
+    },
+    {
+      "path": "overlay-ports/boost-ratio/portfile.cmake",
+      "sha256": "9809ddc06b533fb745f37eab36269549d41b6f486cc84025fbd4f7632a029735"
+    },
+    {
+      "path": "overlay-ports/boost-ratio/vcpkg.json",
+      "sha256": "b756e5e8fbe3d0dca45c1e7b0ff59c504cff1ed2889b3368386567be9156f2d9"
+    },
+    {
+      "path": "overlay-ports/boost-regex/compat.diff",
+      "sha256": "9a356bbaa9c881453bf8949d5da5f22ce96e017421ba7bfe4268ba30c078aca9"
+    },
+    {
+      "path": "overlay-ports/boost-regex/features.cmake",
+      "sha256": "24a7353153ea5327340c43d4d812a8f67f42b6c07989cbdab45e1460f5d91b6e"
+    },
+    {
+      "path": "overlay-ports/boost-regex/portfile.cmake",
+      "sha256": "e07a3e1ca03105640d455118f536772bcffec5077140cb241bcc5fce604bf750"
+    },
+    {
+      "path": "overlay-ports/boost-regex/vcpkg.json",
+      "sha256": "28ccc9385db8ff23dfe920e632f07fea10a32c9bbfecd16c32f078af92d983ae"
+    },
+    {
+      "path": "overlay-ports/boost-scope/portfile.cmake",
+      "sha256": "de3afda0a1cdaa253f10350688a2ff4434053d8f7f209a3c1e9234b9b3a38a50"
+    },
+    {
+      "path": "overlay-ports/boost-scope/vcpkg.json",
+      "sha256": "258e61a3bc1e6eeeaceef92c091eac4d5bde7aaac265d8e4c5a3262bcd95d4d3"
+    },
+    {
+      "path": "overlay-ports/boost-smart-ptr/portfile.cmake",
+      "sha256": "b80ae0d919934fd09c69bfd16227c4e88cb942f07a55c8ce8de78f3c03c166f3"
+    },
+    {
+      "path": "overlay-ports/boost-smart-ptr/vcpkg.json",
+      "sha256": "36010ae919a56a2d0bf8ffda10789a67d6309bf099bebf7daa1688d243f2238a"
+    },
+    {
+      "path": "overlay-ports/boost-static-assert/portfile.cmake",
+      "sha256": "bc84011c9a8dc5634ac876ced0bc7c1fba80b3f7ff483488e4c4030ebcfcf05e"
+    },
+    {
+      "path": "overlay-ports/boost-static-assert/vcpkg.json",
+      "sha256": "203e33da9a0b14b8a32487ae6fd2155ed7bfd996e18eb6b5dcb7e301bc0b92ad"
+    },
+    {
+      "path": "overlay-ports/boost-system/portfile.cmake",
+      "sha256": "5d14c949ba11ecc80828dcde28672e1f8caf621055040b6f70b995bc5949b167"
+    },
+    {
+      "path": "overlay-ports/boost-system/vcpkg.json",
+      "sha256": "decce22549aeefc9abf937a6e3128fd0861b379bf6303c013fc8c85ca3b454a4"
+    },
+    {
+      "path": "overlay-ports/boost-thread/portfile.cmake",
+      "sha256": "0c31a71e97dbb06954ea7a174d82fec8790b49cee6917d137f33529d9efa7c91"
+    },
+    {
+      "path": "overlay-ports/boost-thread/vcpkg.json",
+      "sha256": "b95288d477590a565343e0ae0efb578627fbc3911cd5c9264e44d628a1537fcb"
+    },
+    {
+      "path": "overlay-ports/boost-throw-exception/portfile.cmake",
+      "sha256": "e8c77770d1ac7e734fd122e6d0d2af212002783cfd1915a5cf2903a33c9d21c8"
+    },
+    {
+      "path": "overlay-ports/boost-throw-exception/vcpkg.json",
+      "sha256": "bba69ddfffe492cfdbf13500ead30663679d55ae8be01240123abd8c43aeb44f"
+    },
+    {
+      "path": "overlay-ports/boost-tokenizer/portfile.cmake",
+      "sha256": "454c453b657ef1246c16b20295a34931a18415919b8e49fb9d204898599d7d0e"
+    },
+    {
+      "path": "overlay-ports/boost-tokenizer/vcpkg.json",
+      "sha256": "726a0365b5234c84eccaf615af2ef4fdcf8776c9ac4beccf91bc1cd03555d95e"
+    },
+    {
+      "path": "overlay-ports/boost-tuple/portfile.cmake",
+      "sha256": "b253b13ce29e1560737d11c513df4e4e0009e6ad88f3e1bb481ae3f85fe2d7ca"
+    },
+    {
+      "path": "overlay-ports/boost-tuple/vcpkg.json",
+      "sha256": "f90861110ec3ca58e8e62adfb0ecd2f4012e293f71731e76f4d44f988d597260"
+    },
+    {
+      "path": "overlay-ports/boost-type-index/portfile.cmake",
+      "sha256": "82866c3553e3d00cf8a344a92fe7fa4148c6b6f686b0128914161eb570af68b3"
+    },
+    {
+      "path": "overlay-ports/boost-type-index/vcpkg.json",
+      "sha256": "b1ee00b86b09ae69ffb507d81599011023ce3ecd4eaee02251f4d30d08454bf0"
+    },
+    {
+      "path": "overlay-ports/boost-type-traits/portfile.cmake",
+      "sha256": "86574926d76a9d02d82d997065de3fef00f9874ff43aacae829d52f72c0d3ad2"
+    },
+    {
+      "path": "overlay-ports/boost-type-traits/vcpkg.json",
+      "sha256": "9dffab61f0d3b561539872f86fce9a417b8b7c1685469653c0304772a43425be"
+    },
+    {
+      "path": "overlay-ports/boost-typeof/portfile.cmake",
+      "sha256": "5cbe3edac885406445983d3977ff9f2a06c077a4f5f51899e95a84169dbb9a96"
+    },
+    {
+      "path": "overlay-ports/boost-typeof/vcpkg.json",
+      "sha256": "e0949d87cc1379a5c3168c22c105f3fd0a3f350c74ba90e533983745afb87b41"
+    },
+    {
+      "path": "overlay-ports/boost-uninstall/portfile.cmake",
+      "sha256": "312c9bdc0c2c9d16736f0044c35dd05a935ef2c8ed097c6e35dc74e167a2f72e"
+    },
+    {
+      "path": "overlay-ports/boost-uninstall/vcpkg-cmake-wrapper.cmake",
+      "sha256": "82aa8ef51ee2737c554493d9825a713641d1ec675fd04ef5462e94f2d2511e87"
+    },
+    {
+      "path": "overlay-ports/boost-uninstall/vcpkg.json",
+      "sha256": "acbd1253c9ec87c2722ab7184ecd1a85b2b4bcae9e54596d8142ecebc6bc14e8"
+    },
+    {
+      "path": "overlay-ports/boost-unordered/portfile.cmake",
+      "sha256": "f5f735b30b5398ea2f146dbf7e5978112d4b38a1c8e95d18d1f2a92060dd574d"
+    },
+    {
+      "path": "overlay-ports/boost-unordered/vcpkg.json",
+      "sha256": "ec3b1d69d195f0c4d4a2d05d37a254d3c93516208046910afbb8afd04b1ba73d"
+    },
+    {
+      "path": "overlay-ports/boost-utility/portfile.cmake",
+      "sha256": "403d4b6029b84d61d85b10cde6983aff6d4b38ae4f912a462907f78f96d7c6c6"
+    },
+    {
+      "path": "overlay-ports/boost-utility/vcpkg.json",
+      "sha256": "f1ee742de4bfe86f1a9b0187563ab3eebd456b5ba57f72bac95cf18eef33e0dd"
+    },
+    {
+      "path": "overlay-ports/boost-variant2/portfile.cmake",
+      "sha256": "4db43060881541fec6d4ecb3370cc6b38af1a610ff825878b66933a041014df0"
+    },
+    {
+      "path": "overlay-ports/boost-variant2/vcpkg.json",
+      "sha256": "153542d5f79e64e82ebe788c3fda9affe21dcb302636143097e0daea519b013c"
+    },
+    {
+      "path": "overlay-ports/boost-winapi/portfile.cmake",
+      "sha256": "959f24c30c6888a229b1f02e499c5da2986ac7d866265090645f2b22bcc08ed7"
+    },
+    {
+      "path": "overlay-ports/boost-winapi/vcpkg.json",
+      "sha256": "60e058c6807d03fabb5aaa0cfc9042e8bd727a359abc2973b545cefe2ce0502f"
+    },
+    {
+      "path": "overlay-ports/gtest/001-fix-UWP-death-test.patch",
+      "sha256": "fca2d973dfbca64b3575d7453a189c3ea9db4e413838cd40343d39f64d813f3b"
+    },
+    {
+      "path": "overlay-ports/gtest/clang-tidy-no-lint.patch",
+      "sha256": "f276fb224af39a1e6ad9a88719bd49f2ccc88b7837763b2b4f3d74f107894957"
+    },
+    {
+      "path": "overlay-ports/gtest/fix-main-lib-path.patch",
+      "sha256": "40f5766826c684a063649f308531ba2efe829d540255f99db0be0aa43fb6a691"
+    },
+    {
+      "path": "overlay-ports/gtest/portfile.cmake",
+      "sha256": "4de4d430a970532d6e339b5aae3d5769549e8cc8210bff9ff2d7bfa93c9ba33b"
+    },
+    {
+      "path": "overlay-ports/gtest/usage",
+      "sha256": "48a60f73437a325fd92cebb25c77ce48108f20610836039420b7e2070c91132a"
+    },
+    {
+      "path": "overlay-ports/gtest/vcpkg.json",
+      "sha256": "cca9db97828d9918f89986b7caf5f9b02ddb74ea8e6e36590eb2cf80581e7655"
+    },
+    {
+      "path": "overlay-ports/libudis86/CMakeLists.txt",
+      "sha256": "54f4cee6ae30737849ba6cd07796a9af8014c55e84c7c4b53b83e0f9a4b61f24"
+    },
+    {
+      "path": "overlay-ports/libudis86/fix-macbuild.patch",
+      "sha256": "94813a80e7204872d5d8987bc6993528aefc89598dcaba9262e99dcd85b1ee68"
+    },
+    {
+      "path": "overlay-ports/libudis86/portfile.cmake",
+      "sha256": "09415091340e59a2c3e130c8e5e302fdc4a48aa07da2e1a9d5a366f12795f328"
+    },
+    {
+      "path": "overlay-ports/libudis86/python3.patch",
+      "sha256": "09ff274943c2f117da504e888d116c86adb752e9c96bc8ef3dffa3d55372a16f"
+    },
+    {
+      "path": "overlay-ports/libudis86/vcpkg.json",
+      "sha256": "1b8c43ae7ec125d5a7fb47c2c0865e5bbf0b797923bb3527ec4e428ae3c4ab42"
+    },
+    {
+      "path": "overlay-ports/spdlog/portfile.cmake",
+      "sha256": "53d890b3005aa7b7900831b3f7f4553d22ebc9fe906450c41b53831dc4a89953"
+    },
+    {
+      "path": "overlay-ports/spdlog/vcpkg.json",
+      "sha256": "8a44ed656dd0edd019e384e50176fbce4f151390343507bb76eaa7d3e9688085"
+    },
+    {
+      "path": "overlay-ports/vcpkg-boost/boost-install.cmake",
+      "sha256": "0c599d5d40e74633d5eaeea2bcd46eaa3dd33adefdde7632d925a08b6c3b3bc3"
+    },
+    {
+      "path": "overlay-ports/vcpkg-boost/portfile.cmake",
+      "sha256": "ce7596f5f687382765463a53fd02aae8a4aecc4ab1d009b8eade3f5bcfc4066b"
+    },
+    {
+      "path": "overlay-ports/vcpkg-boost/usage.in",
+      "sha256": "8af069bf0969049bf10b8df8fb5ba55184bf1b816fb61773022555ef35d038a4"
+    },
+    {
+      "path": "overlay-ports/vcpkg-boost/vcpkg-port-config.cmake",
+      "sha256": "265420304e6dc003f7771114d1ce18392b055b6b54e666edecf74a6ad07b5464"
+    },
+    {
+      "path": "overlay-ports/vcpkg-boost/vcpkg.json",
+      "sha256": "7bb3aae0ede1197506e5da61ef14da715593bb0de7d03686b85030166ed4cd58"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake/portfile.cmake",
+      "sha256": "a711531b7f13b7da16fa1f25d7c5737a423d4a126465dc9e6689a0f043fcc1aa"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake/vcpkg-port-config.cmake",
+      "sha256": "f0a30f77c8f5e3ac40436fe2518a61ad067f2955c7ef3be6d6a0ca4b81cd2a45"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake/vcpkg.json",
+      "sha256": "6fd546b781a1aa5df572bdd31672cf222e55698aa5bf7d3e5c11abf1ae56a45b"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake/vcpkg_cmake_build.cmake",
+      "sha256": "6d1c27080fe3e768b5e7b968d6a28a37db154ebcb214297de25f10b6713511e1"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake/vcpkg_cmake_configure.cmake",
+      "sha256": "a8bc92be2faf621d6183ed1f3eb2ac3b103f4418b95f8695cf0dc7f7c5e8f724"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake/vcpkg_cmake_install.cmake",
+      "sha256": "3ae7886dc8434fac6f1e61190cc355fdec5fbd4f60758e2de20423cf49c91369"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake-config/copyright",
+      "sha256": "04b60f99a43bfd7fefdc8364b24aac704a2160cef969b75ba6a38b62dc4c4b70"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake-config/portfile.cmake",
+      "sha256": "832b34e63f5af41ad1b2e4aa79c5bfa507a005b120b51548e674accc706837d7"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake-config/vcpkg-port-config.cmake",
+      "sha256": "72bc3093337e633bdd19fe5d4dd1f38ca1918def49608d676a9c98c686d38b1e"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake-config/vcpkg.json",
+      "sha256": "3964c3d0e6b39c7f42cebd5949cccdc7eb6feb83ee434fe73756c954b173c5c2"
+    },
+    {
+      "path": "overlay-ports/vcpkg-cmake-config/vcpkg_cmake_config_fixup.cmake",
+      "sha256": "f3880578674f1bdbc54b67c5fc3787aaab8ee8bcf4e3e6e008204bf4ab67aa0b"
+    }
+  ],
+  "assets": [
+    {
+      "path": "assets/asmjit-asmjit-fb9f82cb61df36aa513d054e748dc6769045f33e.tar.gz",
+      "sha256": "5aeb6796212b1819eb09cbb22cca46981848b84c38a7b6d3d80d7cde2bf509c9"
+    },
+    {
+      "path": "assets/boost-1.89.0-LICENSE_1_0.txt",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "assets/boostorg-algorithm-boost-1.89.0.tar.gz",
+      "sha256": "86c57a33085b98c3d3aaf1314e4b7bad80d7dba381416c1032536355d9a51924"
+    },
+    {
+      "path": "assets/boostorg-align-boost-1.89.0.tar.gz",
+      "sha256": "3a33270a7aae218ebde9664dfd80aea8b1ba5b84564bfc0548792233c11d0425"
+    },
+    {
+      "path": "assets/boostorg-any-boost-1.89.0.tar.gz",
+      "sha256": "bcc49e0fe173b8bcca8f3a1e7a0edeeafd5c61cc22171567635bd327a52a1654"
+    },
+    {
+      "path": "assets/boostorg-array-boost-1.89.0.tar.gz",
+      "sha256": "60cf52df4a5e065bb98c8381262307704fe8656980b133c78c7d0fe810357a00"
+    },
+    {
+      "path": "assets/boostorg-assert-boost-1.89.0.tar.gz",
+      "sha256": "e25e42fbc5f77dcb203a3479eaf2e9303511f2a5bb8cbdf54e9c562fcbf29da1"
+    },
+    {
+      "path": "assets/boostorg-atomic-boost-1.89.0.tar.gz",
+      "sha256": "83495455fff5056b9e0293a0bf1c7532d462dea6d262fcbd47a2104da27c8d85"
+    },
+    {
+      "path": "assets/boostorg-bind-boost-1.89.0.tar.gz",
+      "sha256": "4169c6f99c9a22c096da319b93b930152073cd505c50b44a8da73f1a47b604cd"
+    },
+    {
+      "path": "assets/boostorg-charconv-boost-1.89.0.tar.gz",
+      "sha256": "9c8e3cdfa389d7243951ab27f398b22101ff258477761f2bc3d75d853cf77295"
+    },
+    {
+      "path": "assets/boostorg-chrono-boost-1.89.0.tar.gz",
+      "sha256": "a7f3577238b972adc216925cd417867c78222b9f70bbebd9b344d2495386e43c"
+    },
+    {
+      "path": "assets/boostorg-cmake-boost-1.89.0.tar.gz",
+      "sha256": "77111abebe9327ccd6ea33c729d5fae3c3aa42a2489f8c9f1adc94cd6fb6dff1"
+    },
+    {
+      "path": "assets/boostorg-concept_check-boost-1.89.0.tar.gz",
+      "sha256": "1670e50d93089ba8c461f934e56742cdb7eaf9a9afb31c0e9c088914daec79aa"
+    },
+    {
+      "path": "assets/boostorg-config-boost-1.89.0.tar.gz",
+      "sha256": "a16a53f8f0dde2a9ff485fb134a069e54aca738009d825837dac9a35cd4afe0a"
+    },
+    {
+      "path": "assets/boostorg-container-boost-1.89.0.tar.gz",
+      "sha256": "0a4dc44417764a7ade6113285340f3eb362782545bae2cf9b50d40f46550d675"
+    },
+    {
+      "path": "assets/boostorg-container_hash-boost-1.89.0.tar.gz",
+      "sha256": "b59a02885ce969be8eaadc1aee434b1027fc5d5e79c7a3ada50d028a2b5ff78c"
+    },
+    {
+      "path": "assets/boostorg-conversion-boost-1.89.0.tar.gz",
+      "sha256": "530810717119cfc6ea1c9e8e3eeb2a5332372359e17d273f770e04e9b4b5a33e"
+    },
+    {
+      "path": "assets/boostorg-core-boost-1.89.0.tar.gz",
+      "sha256": "032e8f535e901a2d1c24b06e7276ed8effa945a963505d09071c65a046272eef"
+    },
+    {
+      "path": "assets/boostorg-date_time-boost-1.89.0.tar.gz",
+      "sha256": "dd04fc51f140056fcea4289f7bb015f0fe36293b43eb7710d81185704924d2f6"
+    },
+    {
+      "path": "assets/boostorg-describe-boost-1.89.0.tar.gz",
+      "sha256": "7147ef717284a0b7a5b505821fbfb83caa6f279aa74b1db82f39ce817fb73d50"
+    },
+    {
+      "path": "assets/boostorg-detail-boost-1.89.0.tar.gz",
+      "sha256": "7285a3c97d656d6a38d83d40915f28e517b1d99c50db18aaec97fffa5ed1e1a4"
+    },
+    {
+      "path": "assets/boostorg-dll-boost-1.89.0.tar.gz",
+      "sha256": "c793515d6908016cf6ee3ce9bf95873c924ca1309d7af09022b2cd76d92df5a4"
+    },
+    {
+      "path": "assets/boostorg-exception-boost-1.89.0.tar.gz",
+      "sha256": "e2ed15b1af7a112c26e95d7345df51fd53b0524801b6db7b26e99ab6f336081a"
+    },
+    {
+      "path": "assets/boostorg-filesystem-boost-1.89.0.tar.gz",
+      "sha256": "31b47f53a18760b2c9b54357f35ce973b033c8171a0cf7a5fa286eb3385f89a2"
+    },
+    {
+      "path": "assets/boostorg-format-boost-1.89.0.tar.gz",
+      "sha256": "adf68aeb6ba2539613547d922822b2178ed109b53bddfbed6c80f42c88bcdb0a"
+    },
+    {
+      "path": "assets/boostorg-function-boost-1.89.0.tar.gz",
+      "sha256": "9ce2adf800f991fd4a335639c70bbfb3021f934f8c43de882d4bbc1c5b2b809a"
+    },
+    {
+      "path": "assets/boostorg-function_types-boost-1.89.0.tar.gz",
+      "sha256": "4491ee740f1661f6d2a826a73e05d0da842cee8783c961e37c20efc238b588f9"
+    },
+    {
+      "path": "assets/boostorg-functional-boost-1.89.0.tar.gz",
+      "sha256": "aa69cc8c4d5d932ef33c6cf86c6c6494eea3dba930db60883f61c90db21de82a"
+    },
+    {
+      "path": "assets/boostorg-fusion-boost-1.89.0.tar.gz",
+      "sha256": "8dde0b60dd707bff5a334c1050eaab9895d66e02c7292ed21cc272a4f52d64b2"
+    },
+    {
+      "path": "assets/boostorg-headers-boost-1.89.0.tar.gz",
+      "sha256": "6a528891d44f48812ee7e93bf518c403d4ab52064b0c89f55a069d4641294fb8"
+    },
+    {
+      "path": "assets/boostorg-integer-boost-1.89.0.tar.gz",
+      "sha256": "8285a1ee5037a0ce797ed1c31e22f710086f89695598638ecda8b2ac7df739f4"
+    },
+    {
+      "path": "assets/boostorg-interprocess-boost-1.89.0.tar.gz",
+      "sha256": "0d0d7f66ce72aaab6137184586db9f2cbd6ff297ce0c6e53b0a49df1e84f0d2c"
+    },
+    {
+      "path": "assets/boostorg-intrusive-boost-1.89.0.tar.gz",
+      "sha256": "a613893c99125f8f3af9ccd61154687f9a280b64e0ea3cd526fe228c3bada3b5"
+    },
+    {
+      "path": "assets/boostorg-io-boost-1.89.0.tar.gz",
+      "sha256": "ad5f9cb49862bc6d7ea2da098d01358958a5c499a955ea88468088b8adf9aca5"
+    },
+    {
+      "path": "assets/boostorg-iterator-boost-1.89.0.tar.gz",
+      "sha256": "9cb36d339fa848a0af82cbbecff20ebdf77ef9211cef9d498a30ba0963ae568c"
+    },
+    {
+      "path": "assets/boostorg-lexical_cast-boost-1.89.0.tar.gz",
+      "sha256": "e5b8a8ea59f52171ed5fba102053431e29b62508d6ddc8497872afec8308c939"
+    },
+    {
+      "path": "assets/boostorg-locale-boost-1.89.0.tar.gz",
+      "sha256": "1b5d3ac4d9923d081379aec69386e74b227d914a3f1fb9ff3f387b110264b64a"
+    },
+    {
+      "path": "assets/boostorg-move-boost-1.89.0.tar.gz",
+      "sha256": "090d1f07815a1840d40b2aa45ce428fafa8d13983e27d3178b68a5b1bd4d84a3"
+    },
+    {
+      "path": "assets/boostorg-mp11-boost-1.89.0.tar.gz",
+      "sha256": "6dbfae01358be88ebefcdfb7707a2a68ba914c39dc83fdd85f556761fe0fafb4"
+    },
+    {
+      "path": "assets/boostorg-mpl-boost-1.89.0.tar.gz",
+      "sha256": "e2a852cffe1a8dd87f37c527995c94a2deac9c152f6534ae416d9d55b67806a8"
+    },
+    {
+      "path": "assets/boostorg-multi_index-boost-1.89.0.tar.gz",
+      "sha256": "83f21c395adf099ad94294fd672c180c0d78f140cdf8d1daf8e95f234555c17a"
+    },
+    {
+      "path": "assets/boostorg-numeric_conversion-boost-1.89.0.tar.gz",
+      "sha256": "9c5146cf6281095486338fec728ca5c736d04d81ba5fdb624fb5bec125d0e8ea"
+    },
+    {
+      "path": "assets/boostorg-optional-boost-1.89.0.tar.gz",
+      "sha256": "65bf01bc1c5b597ce9f86859d8bba439a599e8c7c96d3c66f16e783a9f7acc51"
+    },
+    {
+      "path": "assets/boostorg-predef-boost-1.89.0.tar.gz",
+      "sha256": "5e673c206ca834655087de62e04a67452824196fc7aab28e8f26f546a0cc5a79"
+    },
+    {
+      "path": "assets/boostorg-preprocessor-boost-1.89.0.tar.gz",
+      "sha256": "53de1b2e64706b73903d9f3957525fa8fa620445ec0d596aa6fb8335af6f45c0"
+    },
+    {
+      "path": "assets/boostorg-range-boost-1.89.0.tar.gz",
+      "sha256": "7fc884401a75ac006affedf233c968d852c917bf120c343063f4f6e288ce770c"
+    },
+    {
+      "path": "assets/boostorg-ratio-boost-1.89.0.tar.gz",
+      "sha256": "0448a5a30d7d41ab0ff6ab8d840893b59856f03d91a7b56d65819c1b369f0655"
+    },
+    {
+      "path": "assets/boostorg-regex-boost-1.89.0.tar.gz",
+      "sha256": "97d6caa4c273883f6432a0914d4b77967adf665dfeb209c239b6315c5f7e06db"
+    },
+    {
+      "path": "assets/boostorg-scope-boost-1.89.0.tar.gz",
+      "sha256": "89273a2d1cbad23fda76029592eea627d694bfe319dc669e21dcc6fd9ac24363"
+    },
+    {
+      "path": "assets/boostorg-smart_ptr-boost-1.89.0.tar.gz",
+      "sha256": "5e924e6ca214b399f365d7ee5edc4563ce8d920ea1de4759813e26fc45267ef9"
+    },
+    {
+      "path": "assets/boostorg-static_assert-boost-1.89.0.tar.gz",
+      "sha256": "48ef5ced01a5a4a0b940eb23eb5a0d5a54c8f27ca7326f86a2b90be405f5d53f"
+    },
+    {
+      "path": "assets/boostorg-system-boost-1.89.0.tar.gz",
+      "sha256": "560afaba1200ab7f7f9f79734946a30b2fb12974e8b420dba193e4e13991a557"
+    },
+    {
+      "path": "assets/boostorg-thread-boost-1.89.0.tar.gz",
+      "sha256": "6927ef4d4bc1bfcab87363f6572902755d0caf13425e39391b305619750d9e06"
+    },
+    {
+      "path": "assets/boostorg-throw_exception-boost-1.89.0.tar.gz",
+      "sha256": "7deb2dc859f608355e583747183d323d256bc4dd3230fc5958272e7dce5d1551"
+    },
+    {
+      "path": "assets/boostorg-tokenizer-boost-1.89.0.tar.gz",
+      "sha256": "f559a07a357faca45953edc1c033a363d01bc82a1ec243964a9af280fd520b5f"
+    },
+    {
+      "path": "assets/boostorg-tuple-boost-1.89.0.tar.gz",
+      "sha256": "e7e35ab4dcee831f93f6b17f91c266649a8fa8a6a24d3288f8c2169c20c1c236"
+    },
+    {
+      "path": "assets/boostorg-type_index-boost-1.89.0.tar.gz",
+      "sha256": "244ac9942ba26b9ae4227a3e4ac2648789f16de3d2d16ac44f4a730d35213d53"
+    },
+    {
+      "path": "assets/boostorg-type_traits-boost-1.89.0.tar.gz",
+      "sha256": "228a0dfdf69f60c4eb9ba47c98a358d3163a65b45e9c338793b87df8dba269c0"
+    },
+    {
+      "path": "assets/boostorg-typeof-boost-1.89.0.tar.gz",
+      "sha256": "c92eb1e2d50d8dac61834e82b26cf8763d27617c30e88642d7b503471603f39d"
+    },
+    {
+      "path": "assets/boostorg-unordered-boost-1.89.0.tar.gz",
+      "sha256": "382da703ad2797b57ac52a77704db181bb73c451825f1d5cf7687086f29a8c92"
+    },
+    {
+      "path": "assets/boostorg-utility-boost-1.89.0.tar.gz",
+      "sha256": "9f8c8712e7acadd5cf98fb718952d4b966a4354fd6e26a9e3f74b1f7b75ad98f"
+    },
+    {
+      "path": "assets/boostorg-variant2-boost-1.89.0.tar.gz",
+      "sha256": "b1f6758af60d01c21f3b6435dfc58eca77be36bfbdf5432d8eacc4bc5517e9e9"
+    },
+    {
+      "path": "assets/boostorg-winapi-boost-1.89.0.tar.gz",
+      "sha256": "9f71733c9744e0d12ea244e519705c01911756684ec41edb340b985e93335e12"
+    },
+    {
+      "path": "assets/gabime-spdlog-v1.15.3.tar.gz",
+      "sha256": "15a04e69c222eb6c01094b5c7ff8a249b36bb22788d72519646fb85feb267e67"
+    },
+    {
+      "path": "assets/google-googletest-v1.17.0.tar.gz",
+      "sha256": "65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c"
+    },
+    {
+      "path": "assets/vmt-udis86-56ff6c87c11de0ffa725b14339004820556e343d.tar.gz",
+      "sha256": "824204dfb76d271a0f9868e3b42835dbdb627b3d2b90e8689cbfa3a129c9a299"
+    }
+  ],
+  "upstreamRevision": "57f1ea5e6ad13f7435a7af184748e6c1312c5637"
+}
