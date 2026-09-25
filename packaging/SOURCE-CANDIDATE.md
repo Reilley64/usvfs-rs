@@ -36,7 +36,7 @@ resolution, missing recipes/resources, mismatches and unexpected native/tool
 binaries fail collection before an uploadable archive exists. This verifies
 input identity, not semantic source completeness or reproducibility.
 
-## Archive-only library-source rebuild: plan, NOT validated instructions
+## Archive-only library-source rebuild: Windows validation pending
 
 A separate clean Windows validation must extract the two checkouts, use all
 verified `overlay-ports` as `VCPKG_OVERLAY_PORTS`, and stage the original source
@@ -53,7 +53,10 @@ Downloaded executable archives are intentionally NOT redistributed. This is not
 an offline toolchain closure claim. `x-block-origin` affects tool acquisition as
 well as library assets: only enable it after external tools are provisioned and
 validated. Merely using a mirror while allowing origin fallback does not prove
-an archive-only rebuild. No such rebuild has yet been implemented or validated.
+an archive-only rebuild. `rebuild-sources.ps1` implements this check using a separate null-registry manifest
+and verified overlays; see `SOURCE-REBUILD-INTEGRATION.md`. It has not yet passed
+Windows validation. This is not a general network sandbox; recipe acquisition
+commands must also be reviewed.
 
 Remaining release gates: inspect every source acquisition/patch and notice,
 validate library-source-only acquisition with external tools independently

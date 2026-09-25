@@ -35,6 +35,17 @@ jobs:
           name: source-candidate-UNVERIFIED-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/usvfs-stage/source-candidate-UNVERIFIED.tar.gz
           if-no-files-found: error
+      - name: Rebuild from collected library sources with origin fallback blocked
+        id: source-rebuild
+        shell: pwsh
+        run: ./packaging/rebuild-sources.ps1 -StageDirectory "$env:RUNNER_TEMP/usvfs-stage" -VcpkgRoot "$PWD/.stage-tools/vcpkg" -OutputDirectory "$env:RUNNER_TEMP/usvfs-source-rebuild"
+      - name: Save source rebuild evidence
+        if: always() && (steps.source-rebuild.outcome == 'success' || steps.source-rebuild.outcome == 'failure')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: source-rebuild-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/usvfs-source-rebuild/reports/*
+          if-no-files-found: error
       # Reports remain available on failures. Never upload partial source directories.
       - name: Save inventory reports, including failed build evidence
         if: always()
