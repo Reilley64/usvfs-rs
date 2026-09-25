@@ -1,0 +1,36 @@
+name: Rust bindings
+
+on:
+  push:
+    paths: ["rust/**", "include/**", ".github/workflows/rust-bindings.yml"]
+  pull_request:
+    paths: ["rust/**", "include/**", ".github/workflows/rust-bindings.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bindings:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        target: [x86_64-pc-windows-msvc, i686-pc-windows-msvc]
+    defaults:
+      run:
+        working-directory: rust/usvfs-sys
+    env:
+      LIBCLANG_PATH: C:/Program Files/LLVM/bin
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772
+        with:
+          toolchain: nightly-2026-08-21
+          components: rustfmt, clippy
+          targets: x86_64-pc-windows-msvc, i686-pc-windows-msvc
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Compile bindings and unchanged shim
+        run: cargo test --locked --target ${{ matrix.target }}
+      - name: Lint bindings crate
+        run: cargo clippy --locked --all-targets --target ${{ matrix.target }} -- -D warnings

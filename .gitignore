@@ -32,3 +32,6 @@ msbuild.log
 /stdout_32.log
 
 .vscode
+
+# Local implementation worktrees
+/.worktrees/
