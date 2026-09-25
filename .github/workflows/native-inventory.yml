@@ -22,7 +22,9 @@ jobs:
           persist-credentials: false
       - name: Check source collector helpers
         shell: pwsh
-        run: ./packaging/test-collect-sources.ps1
+        run: |
+          ./packaging/test-collect-sources.ps1
+          ./packaging/test-rebuild-sources.ps1
       - name: Build both Release architectures and record local evidence
         shell: pwsh
         run: ./packaging/stage-native.ps1 -VcpkgRoot "$PWD/.stage-tools/vcpkg" -OutputDirectory "$env:RUNNER_TEMP/usvfs-stage"

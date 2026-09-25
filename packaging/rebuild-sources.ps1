@@ -24,6 +24,25 @@ function Run([string]$Command, [string[]]$Arguments) {
 function Verify([string]$Path, [string]$Algorithm, [string]$Expected) {
     if ((Get-FileHash -LiteralPath $Path -Algorithm $Algorithm).Hash -ne $Expected) { throw "Hash mismatch: $Path" }
 }
+function Copy-ExternalToolArchives([string]$From, [string]$Downloads, [string]$Mirror, $RecordedDownloads) {
+    # These exact tool archives are external prerequisites, never library sources
+    # or source-candidate contents. MSYS2 acquisition rechecks the package archives.
+    foreach ($name in @(
+        'msys2-mingw-w64-x86_64-pkgconf-1~2.4.3-1-any.pkg.tar.zst',
+        'msys2-msys2-runtime-3.6.2-2-x86_64.pkg.tar.zst',
+        'ninja-win-1.13.1.zip',
+        'python-3.12.7-embed-amd64.zip'
+    )) {
+        $record = @($RecordedDownloads | Where-Object path -eq $name)
+        if ($record.Count -ne 1) { throw "Missing unique external tool archive evidence: $name" }
+        $path = Join-Path $From $name
+        Verify $path SHA256 $record[0].sha256
+        $sha512 = (Get-FileHash -LiteralPath $path -Algorithm SHA512).Hash.ToLowerInvariant()
+        Copy-Item -LiteralPath $path -Destination (Join-Path $Downloads $name)
+        Copy-Item -LiteralPath $path -Destination (Join-Path $Mirror $sha512)
+        @{ path = $name; sha256 = $record[0].sha256; sha512 = $sha512; redistribution = 'excluded' }
+    }
+}
 function Inventory([string]$Root) {
     @(Get-ChildItem -LiteralPath $Root -Recurse -File -Force | Sort-Object FullName | ForEach-Object {
         @{ path = [IO.Path]::GetRelativePath($Root, $_.FullName).Replace('\', '/'); bytes = $_.Length; sha256 = (Get-FileHash $_.FullName -Algorithm SHA256).Hash }
@@ -91,7 +110,8 @@ try {
     Verify "$tool/vcpkg.exe" SHA256 (Get-FileHash "$VcpkgRoot/vcpkg.exe" -Algorithm SHA256).Hash
     $external = @(Inventory "$StageDirectory/downloads/tools")
     foreach ($entry in $external) { Verify "$downloads/tools/$($entry.path)" SHA256 $entry.sha256 }
-    Write-Json @{ vcpkgExecutable = (Get-FileHash "$tool/vcpkg.exe" -Algorithm SHA256).Hash; suppliedTools = $external; source = "$StageDirectory/downloads/tools"; redistribution = 'excluded' } 'external-tools'
+    $externalArchives = @(Copy-ExternalToolArchives "$StageDirectory/downloads" $downloads $mirror @(Read-Json "$candidate/evidence/downloads.json"))
+    Write-Json @{ vcpkgExecutable = (Get-FileHash "$tool/vcpkg.exe" -Algorithm SHA256).Hash; suppliedTools = $external; suppliedArchives = $externalArchives; source = "$StageDirectory/downloads"; redistribution = 'excluded' } 'external-tools'
     foreach ($asset in $assets) {
         Copy-Item -LiteralPath $asset.FullName -Destination "$downloads/$($asset.Name)"
         $sha512 = (Get-FileHash $asset.FullName -Algorithm SHA512).Hash.ToLowerInvariant()

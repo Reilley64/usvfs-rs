@@ -34,8 +34,10 @@ gate. Do not interpret the success marker as proof that arbitrary third-party
 scripts cannot access the network. Missing provisioned helpers fail rather than
 relaxing the origin block.
 
-The original stage's `downloads/tools` and bootstrapped `vcpkg.exe` are external
-prerequisites. They are copied into fresh validation locations and hash-recorded
+The original stage's `downloads/tools`, bootstrapped `vcpkg.exe`, and four exact
+helper archives (MSYS2 pkgconf/runtime, Ninja, and embedded Python) are external
+prerequisites. The archive hashes must match the collected download evidence;
+vcpkg's MSYS2 acquisition needs its original package archives as well as tools. They are copied into fresh validation locations and hash-recorded
 independently. They are NOT added to the source archive or redistributed. The
 same runner supplies Visual Studio/MSVC, Windows SDK, CMake, Git, and PowerShell.
 MSYS2 and other helper executables intentionally remain external. No offline
