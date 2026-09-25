@@ -19,9 +19,12 @@ included by the collector. Publication remains blocked.
   as its inventoried SHA256. No other downloaded archives are collected.
 - `prepared/<port>/src/<root>/`: complete prepared source roots, checked against
   staging inventory. Only the exact `buildtrees/<port>/src/` boundary is copied.
-  Source-distributed data/fixtures remain intact. Staging disables Python
-  bytecode generation; the collector rejects `.pyc`/`.pyo` along with native
-  executable/library outputs rather than silently omitting source-root files.
+  Source-distributed data/fixtures remain intact. The reviewed generated cache
+  `libudis86`'s `scripts/__pycache__/ud_opcode.cpython-312.pyc` is omitted only
+  when its preferred `scripts/ud_opcode.py` source is retained. Both hashes and
+  the reason are recorded in `excluded-generated-files.json`. Other bytecode
+  and native executable/library outputs still fail collection. The embedded
+  Python tool generated this cache despite `PYTHONDONTWRITEBYTECODE`.
 - `notices/`: installed dependency copyright notices and bundled fmt license.
   Original notices remain in the full source trees and archives as well.
 - `evidence/`: status, SPDX, versions, features, triplets and provenance reports.

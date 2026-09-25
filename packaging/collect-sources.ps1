@@ -24,11 +24,22 @@ function Copy-Source([string]$From, [string]$To) {
     New-Item -ItemType Directory -Force (Split-Path $To -Parent) | Out-Null
     Copy-Item -LiteralPath $From -Destination $To
 }
-function Copy-Tree([string]$From, [string]$To) {
+function Copy-Tree([string]$From, [string]$To, [switch]$OmitUdisBytecode) {
     if ((Get-Item -LiteralPath $From -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Source link requires review: $From" }
     foreach ($item in Get-ChildItem -LiteralPath $From -Recurse -Force) {
         if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Source link requires review: $($item.FullName)" }
-        if (-not $item.PSIsContainer) { Copy-Source $item.FullName (Join-Path $To ([IO.Path]::GetRelativePath($From, $item.FullName))) }
+        if ($item.PSIsContainer) { continue }
+        $relative = [IO.Path]::GetRelativePath($From, $item.FullName).Replace('\', '/')
+        if ($OmitUdisBytecode -and $relative -eq 'scripts/__pycache__/ud_opcode.cpython-312.pyc') {
+            # The embedded Python tool still writes this generated cache despite
+            # PYTHONDONTWRITEBYTECODE. Preserve its preferred source, not bytecode.
+            $module = Join-Path $From 'scripts/ud_opcode.py'
+            if (-not (Test-Path -LiteralPath $module -PathType Leaf)) { throw 'Cannot omit bytecode without its Python source' }
+            if ((Get-Item -LiteralPath $module).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Python source link requires review' }
+            @{ path = $relative; sha256 = (Get-FileHash $item.FullName -Algorithm SHA256).Hash; source = 'scripts/ud_opcode.py'; sourceSha256 = (Get-FileHash $module -Algorithm SHA256).Hash; reason = 'generated Python bytecode; preferred source retained' }
+            continue
+        }
+        Copy-Source $item.FullName (Join-Path $To $relative)
     }
 }
 function Verify([string]$Path, [string]$Algorithm, [string]$Expected) {
@@ -73,6 +84,7 @@ try {
         [pscustomobject]@{ path = $_.FullName; name = $_.Name; sha512 = (Get-FileHash $_.FullName -Algorithm SHA512).Hash }
     })
     $mapping = @()
+    $excludedGenerated = @()
     $seen = @{}
     foreach ($arch in @('x86', 'x64')) {
         $evidence = @(Read-Json "$reports/resolved-evidence-$arch.json")
@@ -132,7 +144,11 @@ try {
                     $actual = @(Get-ChildItem $roots[0].FullName -File -Recurse -Force)
                     if ($recorded.Count -eq 0 -or $recorded.Count -ne $actual.Count) { throw "Prepared source inventory differs: $key" }
                     foreach ($entry in $recorded) { Verify "$VcpkgRoot/buildtrees/$($entry.path)" SHA256 $entry.sha256 }
-                    Copy-Tree $roots[0].FullName "$candidate/$relative"
+                    $omitted = @(Copy-Tree $roots[0].FullName "$candidate/$relative" -OmitUdisBytecode:($key -eq 'libudis86'))
+                    foreach ($entry in $omitted) {
+                        $entry['port'] = $key
+                        $excludedGenerated += $entry
+                    }
                 }
                 $preparedRoots += $relative
             }
@@ -152,6 +168,7 @@ try {
     Copy-Tree $reports "$candidate/evidence"
     Copy-Source "$PSScriptRoot/SOURCE-CANDIDATE.md" "$candidate/README.md"
     $mapping | ConvertTo-Json -Depth 20 | Set-Content -Encoding utf8 "$candidate/source-map.json"
+    ConvertTo-Json -InputObject $excludedGenerated -Depth 5 | Set-Content -Encoding utf8 "$candidate/excluded-generated-files.json"
     $manifest = @(Get-ChildItem $candidate -File -Recurse | Sort-Object FullName | ForEach-Object {
         @{ path = [IO.Path]::GetRelativePath($candidate, $_.FullName).Replace('\', '/'); bytes = $_.Length; sha256 = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
     })
