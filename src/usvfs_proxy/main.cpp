@@ -22,7 +22,6 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 #include "pch.h"
 #include <../usvfs_dll/hookcontext.h>
 #include <Psapi.h>
-#include <WinUser.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -30,6 +29,7 @@ along with usvfs. If not, see <http://www.gnu.org/licenses/>.
 #include <shared_memory.h>
 #include <sharedparameters.h>
 #include <shmlogger.h>
+#include <spdlog/sinks/null_sink.h>
 #include <spdlog/spdlog.h>
 #include <usvfsparameters.h>
 #include <winapi.h>
@@ -71,55 +71,44 @@ T getParameter(std::vector<std::string>& arguments, const std::string& key,
   }
 }
 
-static void exceptionDialog(int line, int num, ...)
+static std::shared_ptr<spdlog::logger> createLogger()
 {
-  va_list args;
-  va_start(args, num);
-
-  std::wstring wstr;
-  WCHAR buf[256];
-  wstr.append(L"Unhandled USVFS proxy exception (line ");
-  wsprintf(buf, L"%d): ", line);
-  wstr.append(buf);
-  for (int i = 0; i < num; i++) {
-    wsprintf(buf, L"%S", va_arg(args, const char*));
-    if (i < num - 1)
-      wsprintf(buf, L", ");
-    wstr.append(buf);
+  try {
+    SHMLogger::open("usvfs");
+    auto logger = spdlog::create<usvfs::sinks::shm_sink>("usvfs", "usvfs");
+    logger->set_pattern("%H:%M:%S.%e [%L] (proxy) %v");
+    return logger;
+  } catch (const std::exception&) {
+    OutputDebugStringA("USVFS proxy shared logging unavailable; using null sink\n");
+    if (auto logger = spdlog::get("usvfs")) {
+      return logger;
+    }
+    return spdlog::create<spdlog::sinks::null_sink_mt>("usvfs");
   }
+}
 
-  MessageBox(NULL, wstr.data(), NULL, MB_OK);
-
-  va_end(args);
+static void reportError(const std::shared_ptr<spdlog::logger>& logger,
+                        const char* message) noexcept
+{
+  try {
+    logger->critical("{}", message);
+  } catch (const std::exception&) {
+    OutputDebugStringA("USVFS proxy error reporting unavailable\n");
+  }
 }
 
 int main(int argc, char** argv)
 {
-  std::shared_ptr<spdlog::logger> logger;
+  auto logger = createLogger();
 
   std::vector<std::string> arguments;
   std::copy(argv + 1, argv + argc, std::back_inserter(arguments));
 
   std::string instance;
   try {
-    SHMLogger::open("usvfs");
-    logger = spdlog::create<usvfs::sinks::shm_sink>("usvfs", "usvfs");
-    logger->set_pattern("%H:%M:%S.%e [%L] (proxy) %v");
-
     instance = getParameter<std::string>(arguments, "instance", true);
   } catch (const std::exception& e) {
-    if (logger.get() == nullptr) {
-      exceptionDialog(__LINE__, 1, e.what());
-      return 1;
-    }
-    try {
-      logger->critical("{}", e.what());
-    } catch (const spdlog::spdlog_ex& e2) {
-      exceptionDialog(__LINE__, 2, e.what(), e2.what());
-      // no way to log this
-    } catch (const std::exception&) {
-      logger->critical(e.what());
-    }
+    reportError(logger, e.what());
     return 1;
   }
 
@@ -211,11 +200,9 @@ int main(int argc, char** argv)
     try {
       logger->critical("unhandled exception: {}", e.what());
       logExtInfo(e);
-    } catch (const spdlog::spdlog_ex& e2) {
-      // no way to log this
-      exceptionDialog(__LINE__, 2, e.what(), e2.what());
     } catch (const std::exception&) {
-      logger->critical(e.what());
+      OutputDebugStringA("USVFS proxy error reporting unavailable\n");
     }
+    return 1;
   }
 }

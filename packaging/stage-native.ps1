@@ -35,8 +35,14 @@ $state = [ordered]@{ publication = "blocked"; windowsBuild = "started"; architec
 try {
     $fork = Invoke-Checked git @('-C', $source, 'rev-parse', 'HEAD')
     Invoke-Checked git @('-C', $source, 'merge-base', '--is-ancestor', $upstream, 'HEAD')
-    # Packaging and bindings may change; upstream native inputs must not.
-    Invoke-Checked git @('-C', $source, 'diff', '--exit-code', $upstream, '--', 'src', 'include', 'cmake', 'CMakeLists.txt', 'CMakePresets.json', 'vcpkg.json', 'vcpkg-configuration.json', 'LICENSE', 'licenses')
+    # Issue #33 approves one exact native behavior change. Reject every other path or content.
+    $approvedNativeChanges = @{ 'src/usvfs_proxy/main.cpp' = 'e9c4009fb78ab59cdf36ab53a8c26604ff9c54d7' }
+    $nativeChanges = @(Invoke-Checked git @('-C', $source, 'diff', '--name-only', $upstream, '--', 'src', 'include', 'cmake', 'CMakeLists.txt', 'CMakePresets.json', 'vcpkg.json', 'vcpkg-configuration.json', 'LICENSE', 'licenses'))
+    if (Compare-Object @($approvedNativeChanges.Keys) $nativeChanges) { throw "Unapproved native input change: $($nativeChanges -join ', ')" }
+    foreach ($path in $approvedNativeChanges.Keys) {
+        $actualBlob = Invoke-Checked git @('-C', $source, 'rev-parse', "HEAD:$path")
+        if ($actualBlob -cne $approvedNativeChanges[$path]) { throw "Unapproved native input content: $path ($actualBlob)" }
+    }
     $untrackedNative = Invoke-Checked git @('-C', $source, 'ls-files', '--others', '--exclude-standard', '--', 'src', 'include', 'cmake')
     if ($untrackedNative) { throw "Untracked native inputs are not accepted" }
     $dirty = Invoke-Checked git @('-C', $source, 'status', '--porcelain', '--untracked-files=no')

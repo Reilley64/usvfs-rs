@@ -40,6 +40,16 @@ function(usvfs_target_link_usvfs TARGET)
 endfunction()
 
 
+add_test(NAME usvfs_proxy_missing_logger_${ARCH_POSTFIX}
+    COMMAND $<TARGET_FILE:usvfs_proxy> --instance missing-logger --pid 0
+)
+set_tests_properties(usvfs_proxy_missing_logger_${ARCH_POSTFIX}
+    PROPERTIES
+    TIMEOUT 5
+    WILL_FAIL TRUE
+    WORKING_DIRECTORY $<TARGET_FILE_DIR:usvfs_dll>
+)
+
 file(GLOB directories LIST_DIRECTORIES true "*")
 
 # this goes through all the directories and
