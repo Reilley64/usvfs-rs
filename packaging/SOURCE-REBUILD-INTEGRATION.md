@@ -45,10 +45,11 @@ compiler/tool closure or corresponding source for redistributed tools is claimed
 
 Both original presets build Release INSTALL with BUILD_TESTING=OFF and inherited
 `testing` manifest feature. Reports contain package comparisons and SHA256 of all
-four outputs. No runtime or injection tests run. No PE byte-reproducibility claim
-is made. Publication and source-completeness gates remain blocked.
+four outputs. The workflow checks that both staged proxies terminate non-modally
+without shared logging; it does not run injection or product acceptance tests. No
+PE byte-reproducibility claim is made. Publication remains blocked.
 
-Windows run 36084606525 passed both rebuilds with origin fallback blocked and
+Windows run 36245638937 passed both rebuilds with origin fallback blocked and
 identical package/version/feature/triplet identities. The separately provisioned
 helper archives were hash-verified and were not included in the source bundle.
 

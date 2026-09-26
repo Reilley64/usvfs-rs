@@ -1,15 +1,16 @@
 # Native source validation and release packaging
 
-The fork preserves upstream native revision
-`57f1ea5e6ad13f7435a7af184748e6c1312c5637`. Native code, presets, manifests,
-and licenses are unchanged. No injection tests are run.
+The fork preserves upstream native baseline
+`57f1ea5e6ad13f7435a7af184748e6c1312c5637` plus the exact approved issue #33
+proxy delta recorded in `source-approval.json`. Other native code, presets,
+manifests, and licenses remain unchanged.
 
-Windows run [36084606525](https://github.com/Reilley64/usvfs-rs/actions/runs/36084606525)
-passed both original Release builds, source collection, and both archive-only
-library-source rebuilds. All 69 package identities matched for each architecture.
-Only the then-disabled publication gate failed. Independent review checked all
-170 recipe files, 65 source archives plus the Boost license, prepared source roots,
-and dependency notices. The approved hashes are in `source-approval.json`.
+Windows run [36245638937](https://github.com/Reilley64/usvfs-rs/actions/runs/36245638937)
+built both Release architectures, collected source, and rebuilt both architectures
+from the collected archive with origin fallback blocked. Review verified the
+16,347-entry manifest, all 170 recipe files, 65 source archives plus the Boost
+license, unchanged dependency notices, and the exact proxy source blob. The
+approved hashes and run identity are in `source-approval.json`.
 
 ## Source validation
 
@@ -22,6 +23,7 @@ at `74e6536215718009aae747d86d84b78376bf9e09`:
 
 ```powershell
 ./packaging/stage-native.ps1 -VcpkgRoot C:/work/vcpkg -OutputDirectory C:/work/stage
+./packaging/test-proxy-missing-logger.ps1 -StageDirectory C:/work/stage
 ./packaging/collect-sources.ps1 -VcpkgRoot C:/work/vcpkg -StageDirectory C:/work/stage
 ./packaging/rebuild-sources.ps1 -VcpkgRoot C:/work/vcpkg -StageDirectory C:/work/stage -OutputDirectory C:/work/rebuild
 ```

@@ -25,6 +25,9 @@ jobs:
       - name: Build both Release architectures and record local evidence
         shell: pwsh
         run: ./packaging/stage-native.ps1 -VcpkgRoot "$PWD/.stage-tools/vcpkg" -OutputDirectory "$env:RUNNER_TEMP/usvfs-stage"
+      - name: Verify both staged proxies are non-modal without shared logging
+        shell: pwsh
+        run: ./packaging/test-proxy-missing-logger.ps1 -StageDirectory "$env:RUNNER_TEMP/usvfs-stage"
       - name: Collect verified source inputs (completeness UNVERIFIED)
         shell: pwsh
         run: ./packaging/collect-sources.ps1 -VcpkgRoot "$PWD/.stage-tools/vcpkg" -StageDirectory "$env:RUNNER_TEMP/usvfs-stage"

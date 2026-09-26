@@ -58,15 +58,15 @@ well as library assets: only enable it after external tools are provisioned and
 validated. Merely using a mirror while allowing origin fallback does not prove
 an archive-only rebuild. `rebuild-sources.ps1` implements this check using a separate null-registry manifest
 and verified overlays; see `SOURCE-REBUILD-INTEGRATION.md`. Windows run
-36084606525 passed both architectures, and review confirmed that all selected
+36245638937 passed both architectures, and review confirmed that all selected
 recipe source acquisitions use vcpkg's blocked-origin path. This is not a general
 network sandbox or approval of changed recipes, features, or head revisions.
 
-Remaining release gates: inspect every source acquisition/patch and notice,
-validate library-source-only acquisition with external tools independently
-provisioned, compare both rebuilt architectures, review licensing/source offer
-and Rust release alignment. Do not remove the publication gate based only on a
-successful collector run. Do not run injection tests in this staging workflow.
+Source approval does not authorize publication. Fresh release preparation must
+rerun collection and both rebuilds, preserve the frozen source and notice hashes,
+and produce matched archives for product acceptance. Do not remove the publication
+gate based only on a successful collector run. The staging workflow runs only the
+non-modal proxy bootstrap check; it does not run injection tests.
 
 ## API evidence
 

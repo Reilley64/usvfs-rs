@@ -1,10 +1,18 @@
 {
-  "schema": 1,
+  "schema": 2,
   "reviewStatus": "approved",
   "noticesReviewStatus": "approved",
-  "tag": "usvfs-0.5.7.2-rs.1",
-  "reviewedRebuildRunUrl": "https://github.com/Reilley64/usvfs-rs/actions/runs/36084606525",
-  "auditCandidateRun": "36083047408",
+  "tag": "usvfs-0.5.7.2-rs.2",
+  "reviewedRebuildRunUrl": "https://github.com/Reilley64/usvfs-rs/actions/runs/36245638937",
+  "auditCandidateRun": "36245638937",
+  "reviewedCandidateSourceSha256": "c1dd9d86236b15380eb2f24d5686a91fe53fb5ba2ca6f2b4d35e171c46d3ee41",
+  "reviewedCandidateManifestEntries": 16347,
+  "nativeDelta": {
+    "path": "src/usvfs_proxy/main.cpp",
+    "blob": "e9c4009fb78ab59cdf36ab53a8c26604ff9c54d7",
+    "diffSha256": "423fadc05ed257e7e0cde200cbdb6f5978c4b39f67bee73ffe7e6118e6e20075",
+    "reviewedForkRevision": "dd2072859a9790d1fc822183ba49c95575f8d5e5"
+  },
   "recipes": [
     {
       "path": "overlay-ports/asmjit/asmjit.patch",
@@ -951,6 +959,556 @@
     {
       "path": "assets/vmt-udis86-56ff6c87c11de0ffa725b14339004820556e343d.tar.gz",
       "sha256": "824204dfb76d271a0f9868e3b42835dbdb627b3d2b90e8689cbfa3a129c9a299"
+    }
+  ],
+  "notices": [
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/asmjit/copyright",
+      "sha256": "2d6de38ed458e55957042f1fb98c79244bbad04ce8ecb4d4572430007ca7b718"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-algorithm/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-align/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-any/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-array/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-assert/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-atomic/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-bind/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-charconv/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-chrono/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-cmake/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-concept-check/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-config/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-container-hash/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-container/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-conversion/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-core/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-date-time/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-describe/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-detail/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-dll/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-exception/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-filesystem/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-format/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-function-types/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-function/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-functional/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-fusion/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-headers/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-integer/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-interprocess/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-intrusive/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-io/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-iterator/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-lexical-cast/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-locale/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-move/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-mp11/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-mpl/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-multi-index/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-numeric-conversion/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-optional/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-predef/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-preprocessor/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-range/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-ratio/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-regex/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-scope/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-smart-ptr/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-static-assert/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-system/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-thread/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-throw-exception/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-tokenizer/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-tuple/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-type-index/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-type-traits/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-typeof/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-unordered/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-utility/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-variant2/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/boost-winapi/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/gtest/copyright",
+      "sha256": "9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/libudis86/copyright",
+      "sha256": "1070640aab24327354da44507627d1db6c67482a6facc8375a758796a05e3dff"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows-static-md/share/spdlog/copyright",
+      "sha256": "4ccecab18d1ff0b61174fe3d6c430541625d3ddb865b0d5887db296f883c76e7"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows/share/vcpkg-boost/copyright",
+      "sha256": "1ee376fc340e0aa6ad6a3581c94126e741468705096ac92263048a21daa86460"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows/share/vcpkg-cmake-config/copyright",
+      "sha256": "04b60f99a43bfd7fefdc8364b24aac704a2160cef969b75ba6a38b62dc4c4b70"
+    },
+    {
+      "path": "notices/dependencies-x64/x64-windows/share/vcpkg-cmake/copyright",
+      "sha256": "1ee376fc340e0aa6ad6a3581c94126e741468705096ac92263048a21daa86460"
+    },
+    {
+      "path": "notices/dependencies-x86/x64-windows/share/vcpkg-boost/copyright",
+      "sha256": "1ee376fc340e0aa6ad6a3581c94126e741468705096ac92263048a21daa86460"
+    },
+    {
+      "path": "notices/dependencies-x86/x64-windows/share/vcpkg-cmake-config/copyright",
+      "sha256": "04b60f99a43bfd7fefdc8364b24aac704a2160cef969b75ba6a38b62dc4c4b70"
+    },
+    {
+      "path": "notices/dependencies-x86/x64-windows/share/vcpkg-cmake/copyright",
+      "sha256": "1ee376fc340e0aa6ad6a3581c94126e741468705096ac92263048a21daa86460"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/asmjit/copyright",
+      "sha256": "2d6de38ed458e55957042f1fb98c79244bbad04ce8ecb4d4572430007ca7b718"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-algorithm/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-align/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-any/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-array/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-assert/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-atomic/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-bind/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-charconv/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-chrono/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-cmake/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-concept-check/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-config/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-container-hash/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-container/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-conversion/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-core/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-date-time/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-describe/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-detail/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-dll/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-exception/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-filesystem/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-format/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-function-types/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-function/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-functional/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-fusion/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-headers/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-integer/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-interprocess/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-intrusive/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-io/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-iterator/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-lexical-cast/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-locale/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-move/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-mp11/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-mpl/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-multi-index/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-numeric-conversion/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-optional/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-predef/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-preprocessor/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-range/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-ratio/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-regex/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-scope/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-smart-ptr/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-static-assert/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-system/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-thread/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-throw-exception/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-tokenizer/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-tuple/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-type-index/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-type-traits/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-typeof/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-unordered/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-utility/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-variant2/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/boost-winapi/copyright",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/gtest/copyright",
+      "sha256": "9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/libudis86/copyright",
+      "sha256": "1070640aab24327354da44507627d1db6c67482a6facc8375a758796a05e3dff"
+    },
+    {
+      "path": "notices/dependencies-x86/x86-windows-static-md/share/spdlog/copyright",
+      "sha256": "4ccecab18d1ff0b61174fe3d6c430541625d3ddb865b0d5887db296f883c76e7"
+    },
+    {
+      "path": "notices/fmt.license.rst",
+      "sha256": "07580f2a3b35709ce703d523f447b242f6dfec7582a8c0df102c7fa2849375f8"
     }
   ],
   "upstreamRevision": "57f1ea5e6ad13f7435a7af184748e6c1312c5637"

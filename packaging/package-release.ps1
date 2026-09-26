@@ -15,10 +15,18 @@ function Both($Architectures) {
     if (@($Architectures).Count -ne 2 -or (Compare-Object @('x86', 'x64') @($Architectures))) { throw 'Both architectures required' }
 }
 $approval = Read-Json "$PSScriptRoot/source-approval.json"
-$tag = 'usvfs-0.5.7.2-rs.1'
+$tag = 'usvfs-0.5.7.2-rs.2'
 $upstream = '57f1ea5e6ad13f7435a7af184748e6c1312c5637'
-if ($approval.reviewStatus -cne 'approved' -or $approval.noticesReviewStatus -cne 'approved') { throw 'Root source and notices approval pending; publication blocked' }
-if ($approval.tag -cne $tag -or $approval.upstreamRevision -cne $upstream -or $approval.reviewedRebuildRunUrl -notmatch '^https://github.com/Reilley64/usvfs-rs/actions/runs/[0-9]+$') { throw 'Invalid frozen release approval' }
+$reviewedRun = '36245638937'
+$reviewedFork = 'dd2072859a9790d1fc822183ba49c95575f8d5e5'
+$reviewedArchive = 'c1dd9d86236b15380eb2f24d5686a91fe53fb5ba2ca6f2b4d35e171c46d3ee41'
+$reviewedManifestEntries = 16347
+$deltaPath = 'src/usvfs_proxy/main.cpp'
+$deltaBlob = 'e9c4009fb78ab59cdf36ab53a8c26604ff9c54d7'
+$deltaSha256 = '423fadc05ed257e7e0cde200cbdb6f5978c4b39f67bee73ffe7e6118e6e20075'
+if ($approval.schema -ne 2 -or $approval.reviewStatus -cne 'approved' -or $approval.noticesReviewStatus -cne 'approved') { throw 'Root source and notices approval pending; publication blocked' }
+if ($approval.tag -cne $tag -or $approval.upstreamRevision -cne $upstream -or $approval.reviewedRebuildRunUrl -cne "https://github.com/Reilley64/usvfs-rs/actions/runs/$reviewedRun" -or $approval.auditCandidateRun -cne $reviewedRun -or $approval.reviewedCandidateSourceSha256 -cne $reviewedArchive -or $approval.reviewedCandidateManifestEntries -ne $reviewedManifestEntries) { throw 'Invalid frozen release approval' }
+if ($approval.nativeDelta.path -cne $deltaPath -or $approval.nativeDelta.blob -cne $deltaBlob -or $approval.nativeDelta.diffSha256 -cne $deltaSha256 -or $approval.nativeDelta.reviewedForkRevision -cne $reviewedFork) { throw 'Invalid approved native delta' }
 if (Test-Path $OutputDirectory) { throw 'Use a new output directory' }
 $reports = "$StageDirectory/reports"
 $build = Read-Json "$reports/stage-status.json"
@@ -32,6 +40,12 @@ Both $rebuild.architectures
 if ($inputs.archiveSha256 -ne $collection.archiveSha256) { throw 'Candidate SHA differs from the archive rebuilt in this run' }
 $head = & git -C "$PSScriptRoot/.." rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Cannot identify packaging revision' }
+$dirty = & git -C "$PSScriptRoot/.." status --porcelain --untracked-files=no
+if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Tracked packaging files must be committed before packaging' }
+& git -C "$PSScriptRoot/.." merge-base --is-ancestor $reviewedFork HEAD
+if ($LASTEXITCODE -ne 0) { throw 'Packaging revision does not descend from the reviewed native revision' }
+$actualBlob = & git -C "$PSScriptRoot/.." rev-parse "HEAD:$deltaPath"
+if ($LASTEXITCODE -ne 0 -or $actualBlob -cne $deltaBlob) { throw 'Approved native delta content changed' }
 if ($provenance.upstreamRevision -cne $upstream -or $provenance.forkRevision -cne $head -or $inputs.originalProvenance.forkRevision -cne $provenance.forkRevision) { throw 'Source provenance mismatch' }
 $archive = "$StageDirectory/source-candidate-UNVERIFIED.tar.gz"
 Verify $archive $collection.archiveSha256
@@ -48,7 +62,13 @@ try {
         if ($entry.path -match '(^|[/\\])\.\.([/\\]|$)|^[/\\]|^[A-Za-z]:' -or $entry.path -eq 'manifest.json') { throw 'Unsafe manifest path' }
         Verify "$candidate/$($entry.path)" $entry.sha256
     }
-    foreach ($selection in @(@{ root = 'overlay-ports'; files = @($approval.recipes); count = 170 }, @{ root = 'assets'; files = @($approval.assets); count = 66 })) {
+    $forkSource = "$temporary/fork-source"
+    New-Item -ItemType Directory $forkSource | Out-Null
+    & tar -xzf "$candidate/checkouts/fork.tar.gz" -C $forkSource
+    if ($LASTEXITCODE -ne 0) { throw 'Fork source extraction failed' }
+    $archiveBlob = & git hash-object "$forkSource/$deltaPath"
+    if ($LASTEXITCODE -ne 0 -or $archiveBlob -cne $deltaBlob) { throw 'Candidate native delta content changed' }
+    foreach ($selection in @(@{ root = 'overlay-ports'; files = @($approval.recipes); count = 170 }, @{ root = 'assets'; files = @($approval.assets); count = 66 }, @{ root = 'notices'; files = @($approval.notices); count = 137 })) {
         $actual = @(Get-ChildItem "$candidate/$($selection.root)" -Recurse -File -Force | ForEach-Object { [IO.Path]::GetRelativePath($candidate, $_.FullName).Replace('\', '/') })
         if ($selection.files.Count -ne $selection.count -or @($selection.files.path | Sort-Object -Unique).Count -ne $selection.count -or (Compare-Object @($selection.files.path) $actual)) { throw 'Frozen source selection changed' }
         foreach ($file in $selection.files) { Verify "$candidate/$($file.path)" $file.sha256 }
@@ -72,7 +92,7 @@ try {
         }
     }
     [IO.File]::WriteAllText([IO.Path]::GetFullPath("$bundle/bin/source-revision.txt"), $upstream)
-    @{ source = $upstream; configuration = 'Release'; artifacts = $hashes } | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "$bundle/bin/artifacts.json"
+    @{ source = $upstream; forkRevision = $provenance.forkRevision; nativeDelta = @{ path = $deltaPath; blob = $deltaBlob; diffSha256 = $deltaSha256 }; configuration = 'Release'; artifacts = $hashes } | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "$bundle/bin/artifacts.json"
     # Only reviewed notice text is copied, never installed dependency binaries/tools.
     New-Item -ItemType Directory "$bundle/notices" | Out-Null
     foreach ($file in Get-ChildItem "$candidate/notices" -Recurse -File) {
@@ -97,7 +117,9 @@ try {
     @"
 Native Release $tag
 Fork revision: $($provenance.forkRevision)
-Upstream/sourceRevision: $upstream
+Upstream/sourceRevision marker: $upstream
+Approved native delta: $deltaPath blob $deltaBlob
+Approved native diff SHA256: $deltaSha256
 Corresponding source: $sourceUrl
 Source SHA256: $($collection.archiveSha256)
 Requires Windows 11 and Microsoft Visual C++ 2015-2022 Redistributable BOTH x86 and x64, installed separately.
@@ -114,5 +136,5 @@ Rust bindings remain the usvfs-sys 0.0.0 Cargo git source package; no Rust libra
     Copy-Item "$RebuildDirectory/reports/*.json" "$bundle/release-evidence/"
     Copy-Item $archive "$OutputDirectory/$sourceName"
     Compress-Archive -Path "$bundle/*" -DestinationPath "$OutputDirectory/$nativeName"
-    @{ tag = $tag; forkRevision = $provenance.forkRevision; upstreamRevision = $upstream; sourceUrl = $sourceUrl; sourceArchive = $sourceName; sourceSha256 = (Hash "$OutputDirectory/$sourceName"); nativeArchive = $nativeName; nativeSha256 = (Hash "$OutputDirectory/$nativeName"); artifacts = $hashes; publication = 'disabled' } | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "$OutputDirectory/release.json"
+    @{ tag = $tag; forkRevision = $provenance.forkRevision; upstreamRevision = $upstream; nativeDelta = @{ path = $deltaPath; blob = $deltaBlob; diffSha256 = $deltaSha256 }; sourceUrl = $sourceUrl; sourceArchive = $sourceName; sourceSha256 = (Hash "$OutputDirectory/$sourceName"); nativeArchive = $nativeName; nativeSha256 = (Hash "$OutputDirectory/$nativeName"); artifacts = $hashes; publication = 'disabled' } | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "$OutputDirectory/release.json"
 } finally { Remove-Item $temporary -Recurse -Force }
